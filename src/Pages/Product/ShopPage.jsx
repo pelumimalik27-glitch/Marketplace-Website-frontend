@@ -74,16 +74,18 @@ function ShopPage() {
   );
 
   return (
-    <div className="flex gap-6 mt-6">
+    <div className="flex flex-col gap-6 mt-6 lg:flex-row">
       <FilterPanel filter={filter} setFilter={setFilter} />
       <div className="flex-1">
-        <SortBar filter={filter} setFilter={setFilter} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SortBar filter={filter} setFilter={setFilter} />
+        </div>
         {isLoading && <p className="mt-4 text-sm text-gray-500">Loading products...</p>}
         {error && !isLoading && <p className="mt-4 text-sm text-red-600">{error}</p>}
         {!isLoading && !error && filteredProduct.length === 0 && (
           <p className="mt-4 text-sm text-gray-500">No products match your filters.</p>
         )}
-        <div className="grid grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProduct.map((p) => (
             <ProductCard key={p.id} product={p} addToCart={addToCart} />
           ))}

@@ -8,7 +8,7 @@ function FilterPanel({ filter, setFilter }) {
   const categories = ["All", "Electronics", "Fashion", "Home & Garden", "Sports"];
 
   return (
-    <div className="w-72 p-6 bg-white shadow-lg rounded-lg mt-6">
+    <div className="w-full p-5 bg-white shadow-lg rounded-lg lg:w-72">
       <div className="flex items-center gap-2 mb-6">
         <Filter size={20} className="text-orange-600" />
         <h3 className="text-lg font-bold">Filters</h3>
@@ -103,7 +103,7 @@ function FilterPanel({ filter, setFilter }) {
       {/* Rating Filter */}
       <div className="mt-6">
         <label className="block text-sm font-medium mb-3">Minimum Rating</label>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {[4, 3, 2, 1].map(rating => (
             <button
               key={rating}
