@@ -275,7 +275,21 @@ function ProductDetailPage() {
               </button>
             </div>
 
-            <button className="w-full rounded-lg bg-black py-3 font-medium text-white hover:bg-gray-800">Buy Now</button>
+            <button
+              onClick={async () => {
+                if (!isInStock) return;
+                if (cartQuantity === 0) {
+                  await addToCart(product, 1, product.sellerId || "unknown-seller");
+                }
+                navigate("/cart");
+              }}
+              disabled={!isInStock}
+              className={`w-full rounded-lg py-3 font-medium text-white ${
+                isInStock ? "bg-black hover:bg-gray-800" : "cursor-not-allowed bg-gray-300"
+              }`}
+            >
+              Buy Now
+            </button>
           </div>
 
           <div className="mt-8">
