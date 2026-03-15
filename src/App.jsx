@@ -8,6 +8,8 @@ import Layout from './components/Layout/Layout';
 // Pages
 import HomePage from './Pages/Home/HomePage';
 import AuthPage from './Pages/AuthPage';
+import RequestPasswordReset from './Pages/Auth/RequestPasswordReset';
+import ResetPassword from './Pages/Auth/ResetPassword';
 import ShopPage from './Pages/Product/ShopPage';
 import OrderPage from './Pages/Order/OrderPage';
 import TrackOrderPage from './Pages/Order/TrackOrderPage';
@@ -60,6 +62,8 @@ function App() {
       <Route path="/authpage" element={<AuthPage />} />
       <Route path="/login" element={<Navigate to="/authpage?mode=login" replace />} />
       <Route path="/register" element={<Navigate to="/authpage?mode=register" replace />} />
+      <Route path="/forgot-password" element={<RequestPasswordReset />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-otp" element={<VerifyOtp />} />
       <Route path="/checkout/verify" element={<PaymentCallbackPage />} />
       

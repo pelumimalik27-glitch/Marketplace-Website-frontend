@@ -1,15 +1,23 @@
-import { buildApiUrl } from "./api";
+import { buildApiUrl, getApiBaseUrl } from "./api";
 
 const stripHtml = (value = "") => String(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 const request = async (path, options = {}) => {
-  const response = await fetch(buildApiUrl(path), {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  let response;
+  try {
+    response = await fetch(buildApiUrl(path), {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+  } catch (error) {
+    const baseUrl = getApiBaseUrl() || "unknown";
+    throw new Error(
+      `Could not reach server. Check VITE_API_BASE_URL and CORS. Base URL: ${baseUrl}`
+    );
+  }
 
   const raw = await response.text();
   let payload = {};

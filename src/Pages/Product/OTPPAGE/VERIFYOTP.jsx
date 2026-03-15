@@ -12,6 +12,7 @@ export default function VerifyOtp() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [devOtp, setDevOtp] = useState("");
   const [autoSentDone, setAutoSentDone] = useState(false);
 
   useEffect(() => {
@@ -43,9 +44,13 @@ export default function VerifyOtp() {
         setIsSending(true);
         setError("");
         setMessage("");
+        setDevOtp("");
         const response = await sendOtp(email.trim());
         if (cancelled) return;
         setMessage(response?.message || "OTP sent successfully");
+        if (response?.devOtp) {
+          setDevOtp(String(response.devOtp));
+        }
       } catch (err) {
         if (cancelled) return;
         setError(
@@ -77,8 +82,12 @@ export default function VerifyOtp() {
       setIsSending(true);
       setError("");
       setMessage("");
+      setDevOtp("");
       const response = await sendOtp(email.trim());
       setMessage(response?.message || "OTP sent successfully");
+      if (response?.devOtp) {
+        setDevOtp(String(response.devOtp));
+      }
     } catch (err) {
       setError(err.message || "Failed to send OTP");
     } finally {
@@ -96,6 +105,7 @@ export default function VerifyOtp() {
       setIsVerifying(true);
       setError("");
       setMessage("");
+      setDevOtp("");
 
       const response = await verifyOtp(email.trim(), otp.trim());
       setMessage(response?.message || "OTP verified. Redirecting to login...");
@@ -153,6 +163,11 @@ export default function VerifyOtp() {
       </div>
 
       {message && <p className="mt-3 text-sm text-emerald-700">{message}</p>}
+      {devOtp && (
+        <p className="mt-2 text-sm text-slate-600">
+          Dev OTP: <span className="font-semibold">{devOtp}</span>
+        </p>
+      )}
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </div>
   );

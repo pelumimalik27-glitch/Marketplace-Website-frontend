@@ -221,6 +221,17 @@ function AuthPage() {
                 placeholder="Enter your password"
               />
             </div>
+            {isLogin && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password", { state: { email: formData.email } })}
+                  className="text-sm text-orange-600 hover:text-orange-700"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
             
             <div className="text-sm text-gray-600">
             </div>

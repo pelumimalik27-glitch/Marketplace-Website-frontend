@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
-import { AppContext } from "../../../src/contexts/AppContext";
+import { AppContext } from "../../contexts/AppContext";
 import {
   fetchProducts,
   getCachedProductsSnapshot,

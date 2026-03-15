@@ -57,7 +57,7 @@ function FlashDeal() {
         </button>
       </div>
       {error && <p className="mt-4 px-4 text-sm text-orange-100">{error}</p>}
-      <div className="flex flex-wrap justify-center gap-4 mt-6 px-4">
+      <div className="grid grid-cols-2 gap-4 mt-6 px-4 sm:grid-cols-3 lg:grid-cols-6">
         {flashProducts.length > 0 ? (
           flashProducts.map((item) => (
             <FlashDealCard key={item.id} product={item} />
