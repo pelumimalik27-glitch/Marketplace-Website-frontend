@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react'
 import { AppContext } from '../contexts/AppContext';
 import { useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Store, User, Shield } from 'lucide-react';
+import { Store, User, Shield, Eye, EyeOff } from 'lucide-react';
 import { ArrowLeftCircle } from 'lucide-react';
 import { buildApiUrl } from "../lib/api";
 function AuthPage() {
@@ -31,6 +31,7 @@ function AuthPage() {
   
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (prefilledEmail) {
@@ -213,13 +214,23 @@ function AuthPage() {
               <label className="mb-2 block text-sm font-medium text-gray-700">
                 Password
               </label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm transition focus:border-transparent focus:ring-2 focus:ring-orange-500 sm:text-base"
-                placeholder="Enter your password"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 pr-10 text-sm transition focus:border-transparent focus:ring-2 focus:ring-orange-500 sm:text-base"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-2 inline-flex items-center text-gray-500 hover:text-gray-700"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             {isLogin && (
               <div className="text-right">
