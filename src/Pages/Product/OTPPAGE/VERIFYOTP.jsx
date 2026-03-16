@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { sendOtp, verifyOtp } from "../../../lib/mailApi";
 
 export default function VerifyOtp() {
+  const COOLDOWN_SECONDS = 60;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -14,6 +15,19 @@ export default function VerifyOtp() {
   const [message, setMessage] = useState("");
   const [devOtp, setDevOtp] = useState("");
   const [autoSentDone, setAutoSentDone] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const startCooldown = () => {
+    setCooldown(COOLDOWN_SECONDS);
+  };
 
   useEffect(() => {
     if (autoSentDone) return;
@@ -62,6 +76,7 @@ export default function VerifyOtp() {
         if (!cancelled) {
           setIsSending(false);
           setAutoSentDone(true);
+          startCooldown();
         }
       }
     };
@@ -92,6 +107,7 @@ export default function VerifyOtp() {
       setError(err.message || "Failed to send OTP");
     } finally {
       setIsSending(false);
+      startCooldown();
     }
   };
 
@@ -140,10 +156,14 @@ export default function VerifyOtp() {
         <button
           type="button"
           onClick={onSendOtp}
-          disabled={isSending}
+          disabled={isSending || cooldown > 0}
           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60"
         >
-          {isSending ? "Sending..." : "Send OTP"}
+          {isSending
+            ? "Sending..."
+            : cooldown > 0
+            ? `Send OTP (${cooldown}s)`
+            : "Send OTP"}
         </button>
 
         <input
