@@ -74,8 +74,9 @@ function CartPage() {
                           </button>
                           <span className="px-4 py-1 border-x">{item.qty}</span>
                           <button 
+                            disabled={Number(item?.inventory?.quantity ?? 0) > 0 && item.qty >= Number(item?.inventory?.quantity ?? 0)}
                             onClick={() => updateQuantity(item.id, item.qty + 1)}
-                            className="px-3 py-1 hover:bg-gray-100"
+                            className="px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
                           >
                             <Plus size={16} />
                           </button>
