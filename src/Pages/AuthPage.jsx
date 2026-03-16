@@ -271,7 +271,7 @@ function AuthPage() {
                 }}
                 className='text-orange-600 text-sm'
               >
-              <p className="text-gray-800 mt-2 border-orange-600 bg-slate-200">
+              <p className="text-gray-800 mt-2  bg-orange-300 px-3 py-2">
               {isAdminFlow
                 ? "Admin accounts can only sign in"
                 : isLogin
