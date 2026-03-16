@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Star, Truck, Shield, ChevronLeft, Heart } from "lucide-react";
 import { AppContext } from "../../contexts/AppContext";
-import { fetchProductById, fetchProducts } from "../../lib/productApi";
+import { fetchProductById, fetchProducts, subscribeProductUpdates } from "../../lib/productApi";
 import { formatNaira } from "../../lib/currency";
 
 function ProductDetailPage() {
@@ -57,6 +57,19 @@ function ProductDetailPage() {
       isMounted = false;
     };
   }, [id, isLogin]);
+
+  useEffect(() => {
+    if (!product?.id) return undefined;
+    return subscribeProductUpdates(async ({ productId } = {}) => {
+      if (!productId || String(productId) !== String(product.id)) return;
+      try {
+        const fresh = await fetchProductById(product.id);
+        setProduct(fresh);
+      } catch (_) {
+        // ignore refresh failures
+      }
+    });
+  }, [product?.id]);
 
   if (!isLogin) {
     return (

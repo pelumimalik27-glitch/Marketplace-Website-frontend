@@ -3,7 +3,7 @@ import { Package, Truck, CheckCircle, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AppContext } from "../../contexts/AppContext";
 import { fetchMyOrders, fetchOrderById, trackOrderByCode } from "../../lib/orderApi";
-import { fetchProducts } from "../../lib/productApi";
+import { emitProductUpdate, fetchProductById, fetchProducts } from "../../lib/productApi";
 import { formatNaira } from "../../lib/currency";
 import { createReview } from "../../lib/reviewApi";
 import QRCode from "qrcode";
@@ -197,6 +197,19 @@ function OrderPage() {
         comment: String(reviewForms[key]?.comment || "").trim(),
       };
       await createReview(payload);
+      try {
+        const updatedProduct = await fetchProductById(productId);
+        setProducts((prev) =>
+          prev.map((item) =>
+            String(item?.id || item?._id) === String(updatedProduct?.id || updatedProduct?._id)
+              ? { ...item, ...updatedProduct }
+              : item
+          )
+        );
+        emitProductUpdate(updatedProduct?.id || productId);
+      } catch (_) {
+        // ignore product refresh failures
+      }
       setReviewForms((prev) => ({
         ...prev,
         [key]: {

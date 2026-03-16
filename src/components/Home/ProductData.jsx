@@ -2,9 +2,11 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
 import { AppContext } from "../../contexts/AppContext";
 import {
+  fetchProductById,
   fetchProducts,
   getCachedProductsSnapshot,
   getLastProductFetchSource,
+  subscribeProductUpdates,
 } from "../../lib/productApi";
 
 function ProductData() {
@@ -45,6 +47,24 @@ function ProductData() {
       mounted = false;
     };
   }, [hasInitialProducts]);
+
+  useEffect(() => {
+    return subscribeProductUpdates(async ({ productId } = {}) => {
+      if (!productId) return;
+      try {
+        const updated = await fetchProductById(productId);
+        setProducts((prev) =>
+          prev.map((item) =>
+            String(item?.id || item?._id) === String(updated?.id || updated?._id)
+              ? { ...item, ...updated }
+              : item
+          )
+        );
+      } catch (_) {
+        // ignore refresh failures
+      }
+    });
+  }, []);
 
   const filteredProducts = useMemo(() => {
     const keyword = String(searchTerm || "").toLowerCase();

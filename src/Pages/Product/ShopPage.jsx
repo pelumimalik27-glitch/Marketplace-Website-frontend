@@ -3,7 +3,7 @@ import FilterPanel from "../../components/Products/FilterPanel";
 import SortBar from "../../components/Products/SortBar";
 import ProductCard from "../../components/Home/ProductCard";
 import { AppContext } from "../../contexts/AppContext";
-import { fetchProducts, getCachedProductsSnapshot } from "../../lib/productApi";
+import { fetchProductById, fetchProducts, getCachedProductsSnapshot, subscribeProductUpdates } from "../../lib/productApi";
 
 const MAX_PRICE = 1000000;
 
@@ -51,6 +51,24 @@ function ShopPage() {
       mounted = false;
     };
   }, [hasInitialProducts]);
+
+  useEffect(() => {
+    return subscribeProductUpdates(async ({ productId } = {}) => {
+      if (!productId) return;
+      try {
+        const updated = await fetchProductById(productId);
+        setProducts((prev) =>
+          prev.map((item) =>
+            String(item?.id || item?._id) === String(updated?.id || updated?._id)
+              ? { ...item, ...updated }
+              : item
+          )
+        );
+      } catch (_) {
+        // ignore refresh failures
+      }
+    });
+  }, []);
 
   const filteredProduct = useMemo(
     () =>

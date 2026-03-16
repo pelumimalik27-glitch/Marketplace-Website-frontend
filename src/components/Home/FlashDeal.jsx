@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Zap } from "lucide-react";
 import FlashDealCard from "./FlashDealCard";
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { fetchProducts, getCachedProductsSnapshot } from "../../lib/productApi";
+import {
+  fetchProductById,
+  fetchProducts,
+  getCachedProductsSnapshot,
+  subscribeProductUpdates,
+} from "../../lib/productApi";
 
 const pickFlashProducts = (list = []) =>
   [...list]
@@ -12,10 +17,14 @@ const pickFlashProducts = (list = []) =>
 
 function FlashDeal() {
   const navigate = useNavigate();
-  const [flashProducts, setFlashProducts] = useState(() =>
-    pickFlashProducts(getCachedProductsSnapshot({ limit: 24, sort: "-createdAt" }))
+  const [allProducts, setAllProducts] = useState(() =>
+    getCachedProductsSnapshot({ limit: 24, sort: "-createdAt" })
   );
   const [error, setError] = useState("");
+  const flashProducts = useMemo(
+    () => pickFlashProducts(allProducts),
+    [allProducts]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -25,10 +34,10 @@ function FlashDeal() {
         setError("");
         const rows = await fetchProducts({ limit: 24, sort: "-createdAt" });
         if (!mounted) return;
-        setFlashProducts(pickFlashProducts(Array.isArray(rows) ? rows : []));
+        setAllProducts(Array.isArray(rows) ? rows : []);
       } catch (err) {
         if (!mounted) return;
-        setFlashProducts((current) => (current.length > 0 ? current : []));
+        setAllProducts((current) => (current.length > 0 ? current : []));
         setError(err?.message || "Failed to load flash deals");
       }
     };
@@ -37,6 +46,24 @@ function FlashDeal() {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    return subscribeProductUpdates(async ({ productId } = {}) => {
+      if (!productId) return;
+      try {
+        const updated = await fetchProductById(productId);
+        setAllProducts((prev) =>
+          prev.map((item) =>
+            String(item?.id || item?._id) === String(updated?.id || updated?._id)
+              ? { ...item, ...updated }
+              : item
+          )
+        );
+      } catch (_) {
+        // ignore refresh failures
+      }
+    });
   }, []);
 
   return (

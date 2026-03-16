@@ -32,14 +32,16 @@ function CartPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart ({totalItems} items)</h1>
+      <h1 className="text-2xl font-bold mb-6 sm:text-3xl sm:mb-8">
+        Shopping Cart ({totalItems} items)
+      </h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-6">
           {Object.entries(sellerGroups).map(([sellerId, group]) => (
-            <div key={sellerId} className="bg-white rounded-xl shadow p-6">
-              <div className="flex items-center justify-between mb-4 pb-4 border-b">
+            <div key={sellerId} className="bg-white rounded-xl shadow p-4 sm:p-6">
+              <div className="flex flex-col gap-2 mb-4 pb-4 border-b sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="font-bold text-lg">{group.sellerName}</h3>
                   <p className="text-sm text-gray-500">Seller ID: {sellerId}</p>
@@ -51,14 +53,18 @@ function CartPage() {
               
               <div className="space-y-4">
                 {group.items.map(item => (
-                  <div key={item.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded" />
+                  <div key={item.id} className="flex flex-col gap-4 p-4 border rounded-lg sm:flex-row sm:items-center">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-40 object-cover rounded sm:w-24 sm:h-24"
+                    />
                     
                     <div className="flex-1">
                       <h4 className="font-semibold">{item.name}</h4>
                       <p className="text-gray-500 text-sm">{formatNaira(item.price)} each</p>
                       
-                      <div className="flex items-center gap-4 mt-3">
+                      <div className="flex flex-col gap-3 mt-3 sm:flex-row sm:items-center sm:gap-4">
                         <div className="flex items-center border rounded">
                           <button 
                             onClick={() => updateQuantity(item.id, item.qty - 1)}
@@ -75,20 +81,19 @@ function CartPage() {
                           </button>
                         </div>
                         
+                  
                         <span className="font-bold">{formatNaira(item.price * item.qty)}</span>
-                        
                         <button 
                           onClick={() => removeFromCart(item.id)}
-                          className="ml-auto text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 sm:ml-auto"
                         >
                           <Trash2 size={18} />
                         </button>
                       </div>
-                    </div>
+                      </div>
                   </div>
                 ))}
               </div>
-              
               <div className="mt-4 pt-4 border-t text-right">
                 <span className="text-gray-600">
                   Subtotal ({group.items.reduce((sum, i) => sum + i.qty, 0)} items): 
@@ -103,7 +108,7 @@ function CartPage() {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow p-6 sticky top-24">
+          <div className="bg-white rounded-xl shadow p-6 lg:sticky lg:top-24">
             <h2 className="text-xl font-bold mb-6">Order Summary</h2>
             
             <div className="space-y-4 mb-6">
@@ -138,9 +143,9 @@ function CartPage() {
             </Link>
             
             <div className="mt-6 pt-6 border-t text-sm text-gray-500">
-              <p className="mb-2">✓ Secure checkout</p>
-              <p className="mb-2">✓ Buyer protection included</p>
-              <p>✓ 30-day return policy</p>
+              <p className="mb-2">Secure checkout</p>
+              <p className="mb-2">Buyer protection included</p>
+              <p>30-day return policy</p>
             </div>
           </div>
         </div>

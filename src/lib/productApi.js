@@ -2,6 +2,7 @@ import { buildApiUrl } from "./api";
 
 const PRODUCT_CACHE_KEY = "product_cache_v2";
 const LEGACY_CACHE_KEY = "cached_products";
+const PRODUCT_UPDATE_EVENT = "products:updated";
 const hasLocalStorage =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 const REQUEST_TIMEOUT_MS = 8000;
@@ -212,6 +213,23 @@ const buildProductsPath = (options = {}) => {
 export const getLastProductFetchSource = () => lastProductFetchSource;
 export const getCachedProductsSnapshot = (options = {}) =>
   applyOptions(readCachedProducts(), options);
+
+export const emitProductUpdate = (productId) => {
+  if (typeof window === "undefined") return;
+  const safeId = asId(productId);
+  window.dispatchEvent(new CustomEvent(PRODUCT_UPDATE_EVENT, { detail: { productId: safeId } }));
+};
+
+export const subscribeProductUpdates = (handler) => {
+  if (typeof window === "undefined") return () => {};
+  const listener = (event) => {
+    if (typeof handler === "function") {
+      handler(event?.detail || {});
+    }
+  };
+  window.addEventListener(PRODUCT_UPDATE_EVENT, listener);
+  return () => window.removeEventListener(PRODUCT_UPDATE_EVENT, listener);
+};
 
 export const fetchProducts = async (options = {}) => {
   const { useCacheOnError = true } = options;
