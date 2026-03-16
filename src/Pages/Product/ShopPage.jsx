@@ -70,13 +70,20 @@ function ShopPage() {
     });
   }, []);
 
+  const isProductInStock = (product) => {
+    const stockQty = Number(product?.inventory?.quantity ?? 0);
+    const rawInStock =
+      typeof product?.inStock === "boolean" ? product.inStock : stockQty > 0;
+    return rawInStock && stockQty > 0;
+  };
+
   const filteredProduct = useMemo(
     () =>
       products
         .filter((p) => filter.category === "All" || p.category === filter.category)
         .filter((p) => Number(p.price || 0) <= Number(filter.price || 0))
         .filter((p) => !filter.freeShipping || p.freeShipping)
-        .filter((p) => !filter.inStock || p.inStock)
+        .filter((p) => !filter.inStock || isProductInStock(p))
         .filter((p) => Number(p.rating || 0) >= Number(filter.rating || 0))
         .filter((p) =>
           String(p.name || "")

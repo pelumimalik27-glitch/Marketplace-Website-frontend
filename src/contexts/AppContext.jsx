@@ -12,6 +12,7 @@ import {
 } from "../lib/authSession";
 import { fetchUnreadMessageCount } from "../lib/sellerApi";
 import { getChatSocket } from "../lib/chatSocket";
+import { emitProductUpdate } from "../lib/productApi";
 
 
 const AppContext = createContext();
@@ -156,6 +157,11 @@ const AppProvider = ({ children }) => {
     return String(value);
   };
 
+  const notifyInventoryUpdate = (product) => {
+    const safeId = resolveProductId(product);
+    if (safeId) emitProductUpdate(safeId);
+  };
+
   const getAuthHeaders = async () => {
     const token = await getValidAccessToken().catch(
       () => (localStorage.getItem("userToken") || "")
@@ -278,6 +284,7 @@ const AppProvider = ({ children }) => {
       });
       const items = Array.isArray(payload?.data?.items) ? payload.data.items : [];
       setCart(items);
+      notifyInventoryUpdate(productId);
     } catch (_) {
       // fallback to local update
       setCart((prev) => {
@@ -311,6 +318,7 @@ const AppProvider = ({ children }) => {
       });
       const items = Array.isArray(payload?.data?.items) ? payload.data.items : [];
       setCart(items);
+      notifyInventoryUpdate(id);
     } catch (_) {
       setCart((prev) => prev.filter((item) => item.id !== id));
     }
@@ -334,6 +342,7 @@ const AppProvider = ({ children }) => {
       });
       const items = Array.isArray(payload?.data?.items) ? payload.data.items : [];
       setCart(items);
+      notifyInventoryUpdate(id);
     } catch (_) {
       setCart((prev) =>
         prev.map((item) => (item.id === id ? { ...item, qty: newQty } : item))
@@ -342,16 +351,22 @@ const AppProvider = ({ children }) => {
   };
 
   const clearCart = async () => {
+    const productIds = cart.map((item) => item.id).filter(Boolean);
     if (!isLogin || !user?.userId) {
       setCart([]);
       return;
     }
+    let cleared = false;
     try {
       await requestCart("/cart/clear", { method: "DELETE" });
+      cleared = true;
     } catch (_) {
       // ignore
     }
     setCart([]);
+    if (cleared) {
+      productIds.forEach((id) => notifyInventoryUpdate(id));
+    }
   };
 
   const groupCartBySeller = () => {
