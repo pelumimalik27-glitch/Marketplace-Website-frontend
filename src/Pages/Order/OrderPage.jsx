@@ -6,6 +6,11 @@ import { fetchMyOrders, fetchOrderById, trackOrderByCode } from "../../lib/order
 import { emitProductUpdate, fetchProductById, fetchProducts } from "../../lib/productApi";
 import { formatNaira } from "../../lib/currency";
 import { createReview } from "../../lib/reviewApi";
+import {
+  LoadingSpinner,
+  OrderCardSkeleton,
+  SkeletonBox,
+} from "../../components/Loading/StorefrontLoaders";
 import QRCode from "qrcode";
 import { getChatSocket } from "../../lib/chatSocket";
 
@@ -280,14 +285,6 @@ function OrderPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <p className="text-sm text-gray-600">Loading orders...</p>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -303,62 +300,82 @@ function OrderPage() {
       <h1 className="text-3xl font-bold mb-2">My Orders</h1>
       <p className="text-gray-600 mb-8">Track and manage your orders</p>
 
-      <div className="mb-8 rounded-xl border bg-white p-5 shadow">
-        <h2 className="text-lg font-semibold text-slate-900">Track an order</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Enter your full order id (or the last 8 characters shown in your order list).
-        </p>
-        <form onSubmit={handleTrackOrder} className="mt-4 flex flex-col gap-3 sm:flex-row">
-          <input
-            value={trackValue}
-            onChange={(event) => setTrackValue(event.target.value)}
-            placeholder="e.g. 65f8a1c0d2b3e4f56789abcd or 89abcd"
-            className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          />
-          <button
-            type="submit"
-            disabled={tracking}
-            className="rounded-lg bg-orange-600 px-4 py-2 text-sm text-white hover:bg-orange-700 disabled:opacity-60"
-          >
-            {tracking ? "Tracking..." : "Track Order"}
-          </button>
-        </form>
-        {trackingError && (
-          <p className="mt-2 text-sm text-red-600">{trackingError}</p>
-        )}
-        {trackedOrder && (
-          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-slate-800">
-                Order #{String(trackedOrder?._id || "").slice(-8)}
-              </span>
-              {trackedOrder?.orderId && (
-                <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-600">
-                  {trackedOrder.orderId}
-                </span>
-              )}
-              <span
-                className={`ml-auto rounded-full px-2 py-1 text-xs ${getStatusColor(
-                  trackedOrder?.status
-                )}`}
-              >
-                {labelize(trackedOrder?.status)}
-              </span>
+      {loading ? (
+        <div className="space-y-8">
+          <div className="rounded-xl border bg-white p-5 shadow">
+            <SkeletonBox className="h-6 w-32 rounded-full" />
+            <SkeletonBox className="mt-2 h-4 w-80 max-w-full rounded-full" />
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <LoadingSpinner
+                label="Loading your orders"
+                caption="Your order history will appear here once the request completes."
+                className="min-h-[180px] rounded-xl border-0 bg-transparent px-0 py-0 shadow-none"
+              />
             </div>
-            <p className="mt-2 text-slate-600">
-              Placed on{" "}
-              {trackedOrder?.createdAt
-                ? new Date(trackedOrder.createdAt).toLocaleString()
-                : "-"}
-            </p>
-            <p className="mt-1 text-slate-600">
-              Total: {formatNaira(trackedOrder?.summary?.total || 0)}
-            </p>
           </div>
-        )}
-      </div>
+          <div className="space-y-6">
+            <OrderCardSkeleton />
+            <OrderCardSkeleton compact />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="mb-8 rounded-xl border bg-white p-5 shadow">
+            <h2 className="text-lg font-semibold text-slate-900">Track an order</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Enter your full order id (or the last 8 characters shown in your order list).
+            </p>
+            <form onSubmit={handleTrackOrder} className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input
+                value={trackValue}
+                onChange={(event) => setTrackValue(event.target.value)}
+                placeholder="e.g. 65f8a1c0d2b3e4f56789abcd or 89abcd"
+                className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={tracking}
+                className="rounded-lg bg-orange-600 px-4 py-2 text-sm text-white hover:bg-orange-700 disabled:opacity-60"
+              >
+                {tracking ? "Tracking..." : "Track Order"}
+              </button>
+            </form>
+            {trackingError && (
+              <p className="mt-2 text-sm text-red-600">{trackingError}</p>
+            )}
+            {trackedOrder && (
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-slate-800">
+                    Order #{String(trackedOrder?._id || "").slice(-8)}
+                  </span>
+                  {trackedOrder?.orderId && (
+                    <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-600">
+                      {trackedOrder.orderId}
+                    </span>
+                  )}
+                  <span
+                    className={`ml-auto rounded-full px-2 py-1 text-xs ${getStatusColor(
+                      trackedOrder?.status
+                    )}`}
+                  >
+                    {labelize(trackedOrder?.status)}
+                  </span>
+                </div>
+                <p className="mt-2 text-slate-600">
+                  Placed on{" "}
+                  {trackedOrder?.createdAt
+                    ? new Date(trackedOrder.createdAt).toLocaleString()
+                    : "-"}
+                </p>
+                <p className="mt-1 text-slate-600">
+                  Total: {formatNaira(trackedOrder?.summary?.total || 0)}
+                </p>
+              </div>
+            )}
+          </div>
 
-      {rows.length === 0 ? (
+          {rows.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl shadow">
           <Package size={64} className="mx-auto text-gray-300 mb-4" />
           <h3 className="text-xl font-bold text-gray-700 mb-2">No orders yet</h3>
@@ -370,198 +387,200 @@ function OrderPage() {
             Start Shopping
           </Link>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {rows.map((order) => {
-            const orderId = asId(order?._id);
-            const orderItems = Array.isArray(order?.items) ? order.items : [];
-            const summary = order?.summary || {};
-            const isCompleted = String(order?.status || "").toLowerCase() === "completed";
+          ) : (
+            <div className="space-y-6">
+              {rows.map((order) => {
+                const orderId = asId(order?._id);
+                const orderItems = Array.isArray(order?.items) ? order.items : [];
+                const summary = order?.summary || {};
+                const isCompleted = String(order?.status || "").toLowerCase() === "completed";
 
-            return (
-              <div key={orderId} className="bg-white rounded-xl shadow overflow-hidden">
-                <div className="p-6 border-b bg-gray-50">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold">Order #{orderId.slice(-8)}</span>
-                        <span className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${getStatusColor(order?.status)}`}>
-                          {getStatusIcon(order?.status)}
-                          {labelize(order?.status)}
-                        </span>
+                return (
+                  <div key={orderId} className="bg-white rounded-xl shadow overflow-hidden">
+                    <div className="p-6 border-b bg-gray-50">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold">Order #{orderId.slice(-8)}</span>
+                            <span className={`px-3 py-1 rounded-full text-sm flex items-center gap-1 ${getStatusColor(order?.status)}`}>
+                              {getStatusIcon(order?.status)}
+                              {labelize(order?.status)}
+                            </span>
+                          </div>
+                          <p className="text-gray-500 text-sm mt-1">
+                            Placed on {order?.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}
+                          </p>
+                        </div>
+
+                        <button className="flex items-center gap-2 text-gray-600 hover:text-orange-600">
+                          <Download size={16} />
+                          Invoice
+                        </button>
                       </div>
-                      <p className="text-gray-500 text-sm mt-1">
-                        Placed on {order?.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}
-                      </p>
                     </div>
 
-                    <button className="flex items-center gap-2 text-gray-600 hover:text-orange-600">
-                      <Download size={16} />
-                      Invoice
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="font-bold mb-4">Order Items</h3>
-                      <div className="space-y-4">
-                        {orderItems.map((item, idx) => {
-                          const productId = asId(item?.product?._id || item?.product);
-                          const product = productMap.get(productId) || item?.product;
-                          const key = reviewKey(orderId, productId || `idx-${idx}`);
-                          const reviewState = reviewForms[key] || {};
-                          return (
-                            <div key={`${orderId}-${idx}`} className="flex items-center gap-4 p-3 border rounded-lg">
-                              {product?.image ? (
-                                <img src={product.image} alt={product?.name || "Product"} className="w-16 h-16 object-cover rounded" />
-                              ) : (
-                                <div className="w-16 h-16 rounded bg-slate-100" />
-                              )}
-                              <div className="flex-1">
-                                <p className="font-medium">{product?.name || `Product ${asId(item?.product).slice(-6)}`}</p>
-                                <p className="text-sm text-gray-500">Qty: {Number(item?.quantity || 0)} x {formatNaira(item?.price)}</p>
-                                {isCompleted && productId && (
-                                  <div className="mt-2 space-y-2">
-                                    {reviewState.success && (
-                                      <p className="text-xs text-emerald-600">{reviewState.success}</p>
-                                    )}
-                                    {reviewState.error && (
-                                      <p className="text-xs text-red-600">{reviewState.error}</p>
-                                    )}
-                                    {!reviewState.done && !reviewState.open && (
-                                      <button
-                                        type="button"
-                                        onClick={() => openReviewForm(key)}
-                                        className="rounded border border-orange-200 px-2 py-1 text-xs text-orange-700 hover:bg-orange-50"
-                                      >
-                                        Leave review
-                                      </button>
-                                    )}
-                                    {reviewState.open && (
-                                      <div className="rounded border border-slate-200 bg-slate-50 p-2 space-y-2">
-                                        <div className="flex flex-wrap items-center gap-2">
-                                          <label className="text-xs font-medium text-slate-600">
-                                            Rating
-                                          </label>
-                                          <select
-                                            value={reviewState.rating || 5}
-                                            onChange={(e) => updateReviewField(key, "rating", e.target.value)}
-                                            className="rounded border border-slate-200 px-2 py-1 text-xs"
-                                          >
-                                            {[5, 4, 3, 2, 1].map((value) => (
-                                              <option key={value} value={value}>
-                                                {value}
-                                              </option>
-                                            ))}
-                                          </select>
-                                        </div>
-                                        <textarea
-                                          value={reviewState.comment || ""}
-                                          onChange={(e) => updateReviewField(key, "comment", e.target.value)}
-                                          rows={2}
-                                          placeholder="Share your feedback"
-                                          className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
-                                        />
-                                        <div className="flex gap-2">
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                          <h3 className="font-bold mb-4">Order Items</h3>
+                          <div className="space-y-4">
+                            {orderItems.map((item, idx) => {
+                              const productId = asId(item?.product?._id || item?.product);
+                              const product = productMap.get(productId) || item?.product;
+                              const key = reviewKey(orderId, productId || `idx-${idx}`);
+                              const reviewState = reviewForms[key] || {};
+                              return (
+                                <div key={`${orderId}-${idx}`} className="flex items-center gap-4 p-3 border rounded-lg">
+                                  {product?.image ? (
+                                    <img src={product.image} alt={product?.name || "Product"} className="w-16 h-16 object-cover rounded" />
+                                  ) : (
+                                    <div className="w-16 h-16 rounded bg-slate-100" />
+                                  )}
+                                  <div className="flex-1">
+                                    <p className="font-medium">{product?.name || `Product ${asId(item?.product).slice(-6)}`}</p>
+                                    <p className="text-sm text-gray-500">Qty: {Number(item?.quantity || 0)} x {formatNaira(item?.price)}</p>
+                                    {isCompleted && productId && (
+                                      <div className="mt-2 space-y-2">
+                                        {reviewState.success && (
+                                          <p className="text-xs text-emerald-600">{reviewState.success}</p>
+                                        )}
+                                        {reviewState.error && (
+                                          <p className="text-xs text-red-600">{reviewState.error}</p>
+                                        )}
+                                        {!reviewState.done && !reviewState.open && (
                                           <button
                                             type="button"
-                                            disabled={reviewState.loading}
-                                            onClick={() => submitReview(key, { orderId, productId })}
-                                            className="rounded bg-orange-600 px-2 py-1 text-xs text-white disabled:opacity-60"
+                                            onClick={() => openReviewForm(key)}
+                                            className="rounded border border-orange-200 px-2 py-1 text-xs text-orange-700 hover:bg-orange-50"
                                           >
-                                            {reviewState.loading ? "Submitting..." : "Submit"}
+                                            Leave review
                                           </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => closeReviewForm(key)}
-                                            className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
-                                          >
-                                            Cancel
-                                          </button>
-                                        </div>
+                                        )}
+                                        {reviewState.open && (
+                                          <div className="rounded border border-slate-200 bg-slate-50 p-2 space-y-2">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                              <label className="text-xs font-medium text-slate-600">
+                                                Rating
+                                              </label>
+                                              <select
+                                                value={reviewState.rating || 5}
+                                                onChange={(e) => updateReviewField(key, "rating", e.target.value)}
+                                                className="rounded border border-slate-200 px-2 py-1 text-xs"
+                                              >
+                                                {[5, 4, 3, 2, 1].map((value) => (
+                                                  <option key={value} value={value}>
+                                                    {value}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </div>
+                                            <textarea
+                                              value={reviewState.comment || ""}
+                                              onChange={(e) => updateReviewField(key, "comment", e.target.value)}
+                                              rows={2}
+                                              placeholder="Share your feedback"
+                                              className="w-full rounded border border-slate-200 px-2 py-1 text-xs"
+                                            />
+                                            <div className="flex gap-2">
+                                              <button
+                                                type="button"
+                                                disabled={reviewState.loading}
+                                                onClick={() => submitReview(key, { orderId, productId })}
+                                                className="rounded bg-orange-600 px-2 py-1 text-xs text-white disabled:opacity-60"
+                                              >
+                                                {reviewState.loading ? "Submitting..." : "Submit"}
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => closeReviewForm(key)}
+                                                className="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+                                              >
+                                                Cancel
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                     )}
                                   </div>
-                                )}
-                              </div>
-                              <span className="font-bold">{formatNaira(item?.total)}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="font-bold mb-4">Order Summary</h3>
-                      <div className="space-y-3 p-4 border rounded-lg">
-                        <div className="flex justify-between">
-                          <span>Subtotal</span>
-                          <span>{formatNaira(summary?.subtotal)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Shipping</span>
-                          <span>{formatNaira(summary?.shipping)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Tax</span>
-                          <span>{formatNaira(summary?.tax)}</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-3">
-                          <span className="font-bold">Total</span>
-                          <span className="text-xl font-bold text-orange-600">
-                            {formatNaira(summary?.total)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {order?.orderId && qrByOrderId[String(order?._id || order?.orderId)] && (
-                        <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
-                          <p className="text-sm font-semibold text-slate-900">Track this order</p>
-                          <p className="text-xs text-slate-500">
-                            Scan the QR code or open the tracking page.
-                          </p>
-                          <div className="mt-3 flex flex-wrap items-center gap-4">
-                            <img
-                              src={qrByOrderId[String(order?._id || order?.orderId)]}
-                              alt={`Track order ${order?.orderId}`}
-                              className="h-28 w-28 rounded border"
-                            />
-                            <Link
-                              to={`/track-order/${encodeURIComponent(order.orderId)}`}
-                              className="rounded-lg border border-orange-200 px-3 py-2 text-sm text-orange-700 hover:bg-orange-50"
-                            >
-                              Open tracking
-                            </Link>
-                            <a
-                              href={qrByOrderId[String(order?._id || order?.orderId)]}
-                              download={`order-${order?.orderId || "tracking"}.png`}
-                              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                              Download QR
-                            </a>
+                                  <span className="font-bold">{formatNaira(item?.total)}</span>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      )}
 
-                      {isCompleted && (
-                        <div className="mt-5">
-                          <Link
-                            to={`/dispute/${orderId}`}
-                            className="inline-flex rounded-lg border-2 border-red-600 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                          >
-                            File Dispute
-                          </Link>
+                        <div>
+                          <h3 className="font-bold mb-4">Order Summary</h3>
+                          <div className="space-y-3 p-4 border rounded-lg">
+                            <div className="flex justify-between">
+                              <span>Subtotal</span>
+                              <span>{formatNaira(summary?.subtotal)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Shipping</span>
+                              <span>{formatNaira(summary?.shipping)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Tax</span>
+                              <span>{formatNaira(summary?.tax)}</span>
+                            </div>
+                            <div className="flex justify-between border-t pt-3">
+                              <span className="font-bold">Total</span>
+                              <span className="text-xl font-bold text-orange-600">
+                                {formatNaira(summary?.total)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {order?.orderId && qrByOrderId[String(order?._id || order?.orderId)] && (
+                            <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+                              <p className="text-sm font-semibold text-slate-900">Track this order</p>
+                              <p className="text-xs text-slate-500">
+                                Scan the QR code or open the tracking page.
+                              </p>
+                              <div className="mt-3 flex flex-wrap items-center gap-4">
+                                <img
+                                  src={qrByOrderId[String(order?._id || order?.orderId)]}
+                                  alt={`Track order ${order?.orderId}`}
+                                  className="h-28 w-28 rounded border"
+                                />
+                                <Link
+                                  to={`/track-order/${encodeURIComponent(order.orderId)}`}
+                                  className="rounded-lg border border-orange-200 px-3 py-2 text-sm text-orange-700 hover:bg-orange-50"
+                                >
+                                  Open tracking
+                                </Link>
+                                <a
+                                  href={qrByOrderId[String(order?._id || order?.orderId)]}
+                                  download={`order-${order?.orderId || "tracking"}.png`}
+                                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                                >
+                                  Download QR
+                                </a>
+                              </div>
+                            </div>
+                          )}
+
+                          {isCompleted && (
+                            <div className="mt-5">
+                              <Link
+                                to={`/dispute/${orderId}`}
+                                className="inline-flex rounded-lg border-2 border-red-600 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                              >
+                                File Dispute
+                              </Link>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -187,3 +187,47 @@ export function ProductDetailSkeleton() {
     </div>
   );
 }
+
+export function OrderCardSkeleton({ compact = false }) {
+  return (
+    <div className="overflow-hidden rounded-xl bg-white shadow" aria-hidden="true">
+      <div className="border-b bg-gray-50 p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <SkeletonBox className="h-5 w-40 rounded-full" />
+            <SkeletonBox className="h-4 w-52 rounded-full" />
+          </div>
+          <SkeletonBox className="h-9 w-24 rounded-full" />
+        </div>
+      </div>
+      <div className="p-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div>
+            <SkeletonBox className="mb-4 h-5 w-28 rounded-full" />
+            <div className="space-y-4">
+              {Array.from({ length: compact ? 1 : 2 }).map((_, index) => (
+                <div key={index} className="flex items-center gap-4 rounded-lg border p-3">
+                  <SkeletonBox className="h-16 w-16 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <SkeletonBox className="h-4 w-3/4 rounded-full" />
+                    <SkeletonBox className="h-3 w-1/2 rounded-full" />
+                  </div>
+                  <SkeletonBox className="h-5 w-20 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <SkeletonBox className="mb-4 h-5 w-32 rounded-full" />
+            <div className="space-y-3 rounded-lg border p-4">
+              <SkeletonBox className="h-4 w-full rounded-full" />
+              <SkeletonBox className="h-4 w-full rounded-full" />
+              <SkeletonBox className="h-4 w-full rounded-full" />
+              <SkeletonBox className="h-6 w-32 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
