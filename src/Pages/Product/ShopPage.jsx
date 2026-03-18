@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import FilterPanel from "../../components/Products/FilterPanel";
 import SortBar from "../../components/Products/SortBar";
 import ProductCard from "../../components/Home/ProductCard";
+import { LoadingPill, LoadingSpinner, ProductGridSkeleton } from "../../components/Loading/StorefrontLoaders";
 import { AppContext } from "../../contexts/AppContext";
 import { fetchProductById, fetchProducts, getCachedProductsSnapshot, subscribeProductUpdates } from "../../lib/productApi";
 
@@ -13,6 +14,7 @@ function ShopPage() {
   const hasInitialProducts = initialProducts.length > 0;
   const [products, setProducts] = useState(initialProducts);
   const [isLoading, setIsLoading] = useState(!hasInitialProducts);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState({
     category: "All",
@@ -32,6 +34,8 @@ function ShopPage() {
       try {
         if (!hasInitialProducts) {
           setIsLoading(true);
+        } else {
+          setIsRefreshing(true);
         }
         setError("");
         const rows = await fetchProducts({ sort: "-createdAt" });
@@ -42,7 +46,10 @@ function ShopPage() {
         setProducts([]);
         setError(err?.message || "Failed to load products");
       } finally {
-        if (mounted) setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
     };
 
@@ -104,16 +111,32 @@ function ShopPage() {
       <div className="flex-1">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <SortBar filter={filter} setFilter={setFilter} />
+          {isRefreshing && products.length > 0 && (
+            <LoadingPill label="Refreshing products..." />
+          )}
         </div>
-        {isLoading && <p className="mt-4 text-sm text-gray-500">Loading products...</p>}
-        {error && !isLoading && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
         {!isLoading && !error && filteredProduct.length === 0 && (
           <p className="mt-4 text-sm text-gray-500">No products match your filters.</p>
         )}
-        <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProduct.map((p) => (
-            <ProductCard key={p.id} product={p} addToCart={addToCart} />
-          ))}
+        <div className="mt-4">
+          {isLoading ? (
+            <div className="space-y-4">
+              <LoadingSpinner
+                compact
+                label="Loading products"
+                caption=""
+                className="justify-start rounded-full border border-slate-950 bg-white px-4 py-2 text-slate-900"
+              />
+              <ProductGridSkeleton count={8} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredProduct.map((p) => (
+                <ProductCard key={p.id} product={p} addToCart={addToCart} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

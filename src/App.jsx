@@ -1,10 +1,10 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext } from 'react';
 import { AppContext } from "./contexts/AppContext";
 
 // Layout Components
 import Layout from './components/Layout/Layout';
-import PageSkeleton from './components/Layout/PageSkeleton';
+import { LoadingSpinner } from './components/Loading/StorefrontLoaders';
 
 // Pages
 import HomePage from './Pages/Home/HomePage';
@@ -41,21 +41,15 @@ import BuyerMessages from './Pages/Buyer/BuyerMessage';
 function App() {
   const { isLogin, user, authReady } = useContext(AppContext);
   const location = useLocation();
-  const [showPageSkeleton, setShowPageSkeleton] = useState(true);
-  const firstLoadRef = useRef(true);
-  const authPendingFallback = <PageSkeleton visible overlay={false} />;
-
-  useEffect(() => {
-    const durationMs = firstLoadRef.current ? 700 : 350;
-    setShowPageSkeleton(true);
-
-    const timeout = window.setTimeout(() => {
-      setShowPageSkeleton(false);
-    }, durationMs);
-
-    firstLoadRef.current = false;
-    return () => window.clearTimeout(timeout);
-  }, [location.pathname, location.search]);
+  const authPendingFallback = (
+    <div className="flex min-h-[50vh] items-center justify-center px-4 py-10">
+      <LoadingSpinner
+        label="Checking your session"
+        caption="Please wait while we confirm access to this page."
+        className="w-full max-w-md"
+      />
+    </div>
+  );
 
   const requireLogin = (element) => (
     !authReady ? authPendingFallback : isLogin ? (
@@ -178,7 +172,6 @@ function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <PageSkeleton visible={showPageSkeleton} />
     </>
   );
 }

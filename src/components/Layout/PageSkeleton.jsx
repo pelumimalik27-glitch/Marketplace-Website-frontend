@@ -1,4 +1,5 @@
 import React from "react";
+import { LoadingSpinner } from "../Loading/StorefrontLoaders";
 
 function SkeletonBlock({ className = "" }) {
   return <div className={`animate-pulse rounded-2xl bg-slate-200/80 ${className}`} />;
@@ -30,6 +31,15 @@ function PageSkeleton({ visible = false, overlay = true }) {
             <SkeletonBlock className="h-10 w-24" />
             <SkeletonBlock className="h-10 w-28" />
           </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-slate-200 bg-white px-4 py-3">
+          <LoadingSpinner
+            compact
+            label="Loading marketplace"
+            caption=""
+            className="justify-start text-slate-900"
+          />
         </div>
 
         <div className="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">

@@ -3,6 +3,7 @@ import { Zap } from "lucide-react";
 import FlashDealCard from "./FlashDealCard";
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { FlashDealSkeleton, LoadingPill } from "../Loading/StorefrontLoaders";
 import {
   fetchProductById,
   fetchProducts,
@@ -17,9 +18,14 @@ const pickFlashProducts = (list = []) =>
 
 function FlashDeal() {
   const navigate = useNavigate();
-  const [allProducts, setAllProducts] = useState(() =>
-    getCachedProductsSnapshot({ limit: 24, sort: "-createdAt" })
+  const initialProducts = useMemo(
+    () => getCachedProductsSnapshot({ limit: 24, sort: "-createdAt" }),
+    []
   );
+  const hasInitialProducts = initialProducts.length > 0;
+  const [allProducts, setAllProducts] = useState(initialProducts);
+  const [isLoading, setIsLoading] = useState(!hasInitialProducts);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState("");
   const flashProducts = useMemo(
     () => pickFlashProducts(allProducts),
@@ -31,6 +37,11 @@ function FlashDeal() {
 
     const loadFlashProducts = async () => {
       try {
+        if (!hasInitialProducts) {
+          setIsLoading(true);
+        } else {
+          setIsRefreshing(true);
+        }
         setError("");
         const rows = await fetchProducts({ limit: 24, sort: "-createdAt" });
         if (!mounted) return;
@@ -39,6 +50,11 @@ function FlashDeal() {
         if (!mounted) return;
         setAllProducts((current) => (current.length > 0 ? current : []));
         setError(err?.message || "Failed to load flash deals");
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
     };
 
@@ -66,6 +82,10 @@ function FlashDeal() {
     });
   }, []);
 
+  if (isLoading) {
+    return <FlashDealSkeleton />;
+  }
+
   return (
     <div className="bg-orange-600 rounded-md h-auto py-10 w-full mt-10 pl-2 pr-2">
       <div className="flex items-center justify-between px-4">
@@ -83,6 +103,11 @@ function FlashDeal() {
           View All <span><ChevronRight size={18} /></span>
         </button>
       </div>
+      {isRefreshing && allProducts.length > 0 && (
+        <div className="mt-4 px-4">
+          <LoadingPill label="Refreshing flash deals..." />
+        </div>
+      )}
       {error && <p className="mt-4 px-4 text-sm text-orange-100">{error}</p>}
       <div className="grid grid-cols-2 gap-4 mt-6 px-4 sm:grid-cols-3 lg:grid-cols-6">
         {flashProducts.length > 0 ? (

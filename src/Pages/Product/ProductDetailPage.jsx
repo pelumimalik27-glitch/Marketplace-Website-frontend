@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Star, Truck, Shield, ChevronLeft, Heart } from "lucide-react";
 import { AppContext } from "../../contexts/AppContext";
+import { LoadingSpinner, SkeletonBox } from "../../components/Loading/StorefrontLoaders";
 import { fetchProductById, fetchProducts, subscribeProductUpdates } from "../../lib/productApi";
 import { createConversation } from "../../lib/sellerApi";
 import { formatNaira } from "../../lib/currency";
@@ -85,8 +86,40 @@ function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-gray-600">Loading product...</p>
+      <div className="container mx-auto px-3 py-6 sm:px-4 sm:py-8">
+        <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-sm text-gray-600 hover:text-orange-600 sm:text-base">
+          <ChevronLeft size={20} />
+          Back to Products
+        </button>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+          <div className="space-y-4">
+            <div className="rounded-xl bg-white p-3 shadow-lg sm:p-4">
+              <SkeletonBox className="h-64 w-full rounded-lg sm:h-96" />
+            </div>
+            <div className="flex gap-2 overflow-x-auto">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <SkeletonBox key={index} className="h-20 w-20 rounded-lg" />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <LoadingSpinner
+                label="Loading product details"
+                caption="Product information will appear here once the request completes."
+                className="min-h-[180px] rounded-xl border-0 bg-transparent px-0 py-0 shadow-none"
+              />
+            </div>
+            <div className="space-y-4">
+              <SkeletonBox className="h-4 w-24 rounded-full" />
+              <SkeletonBox className="h-10 w-4/5 rounded-xl" />
+              <SkeletonBox className="h-5 w-40 rounded-full" />
+              <SkeletonBox className="h-10 w-32 rounded-xl" />
+              <SkeletonBox className="h-12 w-full rounded-xl" />
+              <SkeletonBox className="h-12 w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

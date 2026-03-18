@@ -3,4 +3,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --store-orange: #f68b1e;
+  --store-orange-soft: #fff1df;
+  --store-shimmer-base: #e2e8f0;
+  --store-shimmer-glow: #fff7ed;
+}
+
+@keyframes storefront-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.store-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    var(--store-shimmer-base) 8%,
+    var(--store-shimmer-glow) 18%,
+    var(--store-shimmer-base) 33%
+  );
+  background-size: 220% 100%;
+  animation: storefront-shimmer 1.35s linear infinite;
+}
 
