@@ -33,3 +33,4 @@ export const buildApiUrl = (path = "") => {
 };
 
 export const getApiBaseUrl = () => API_BASE_URL;
+export const hasExplicitApiBaseUrl = () => Boolean(envBaseUrl);
