@@ -170,7 +170,7 @@ function AuthPage() {
           <img
             src="/images/Logo.png"
             alt="Elite Marketplace logo"
-            className={`mx-auto object-contain ${isCompact ? "mb-3 h-12 w-12" : "mb-4 h-14 w-14 sm:h-16 sm:w-16"}`}
+            className={`mx-auto object-contain ${isCompact ? "mb-3 h-12 w-12 rounded-full" : "mb-4 h-14 w-14 sm:h-16 sm:w-16 rounded-full"}`}
           />
           <h1 className={`${isCompact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"} font-bold text-gray-900`}>Elite Marketplace</h1>
           <p className="mt-1.5 text-sm text-gray-600 sm:text-base">
