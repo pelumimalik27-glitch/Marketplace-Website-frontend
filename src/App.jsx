@@ -1,9 +1,10 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useContext } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { AppContext } from "./contexts/AppContext";
 
 // Layout Components
 import Layout from './components/Layout/Layout';
+import PageSkeleton from './components/Layout/PageSkeleton';
 
 // Pages
 import HomePage from './Pages/Home/HomePage';
@@ -40,9 +41,24 @@ import BuyerMessages from './Pages/Buyer/BuyerMessage';
 function App() {
   const { isLogin, user, authReady } = useContext(AppContext);
   const location = useLocation();
+  const [showPageSkeleton, setShowPageSkeleton] = useState(true);
+  const firstLoadRef = useRef(true);
+  const authPendingFallback = <PageSkeleton visible overlay={false} />;
+
+  useEffect(() => {
+    const durationMs = firstLoadRef.current ? 700 : 350;
+    setShowPageSkeleton(true);
+
+    const timeout = window.setTimeout(() => {
+      setShowPageSkeleton(false);
+    }, durationMs);
+
+    firstLoadRef.current = false;
+    return () => window.clearTimeout(timeout);
+  }, [location.pathname, location.search]);
 
   const requireLogin = (element) => (
-    !authReady ? null : isLogin ? (
+    !authReady ? authPendingFallback : isLogin ? (
       element
     ) : (
       <Navigate
@@ -57,114 +73,113 @@ function App() {
   );
 
   return (
-    <Routes>
-   
-      <Route path="/authpage" element={<AuthPage />} />
-      <Route path="/login" element={<Navigate to="/authpage?mode=login" replace />} />
-      <Route path="/register" element={<Navigate to="/authpage?mode=register" replace />} />
-      <Route path="/forgot-password" element={<RequestPasswordReset />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/verify-otp" element={<VerifyOtp />} />
-      <Route path="/checkout/verify" element={<PaymentCallbackPage />} />
-      
-   
-      <Route path="/" element={<Layout />}>
-        <Route index element={<HomePage />} />
-        <Route path="product/:id" element={requireLogin(<ProductDetailPage />)} />
-        <Route path="shoppage" element={<ShopPage />} />
+    <>
+      <Routes>
+        <Route path="/authpage" element={<AuthPage />} />
+        <Route path="/login" element={<Navigate to="/authpage?mode=login" replace />} />
+        <Route path="/register" element={<Navigate to="/authpage?mode=register" replace />} />
+        <Route path="/forgot-password" element={<RequestPasswordReset />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/checkout/verify" element={<PaymentCallbackPage />} />
+
+        <Route path="/" element={<Layout />}>
+          <Route index element={<HomePage />} />
+          <Route path="product/:id" element={requireLogin(<ProductDetailPage />)} />
+          <Route path="shoppage" element={<ShopPage />} />
+          <Route
+            path="messages"
+            element={
+              !authReady
+                ? authPendingFallback
+                : isLogin
+                  ? <BuyerMessages />
+                  : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/messages", mode: "login" }} />
+            }
+          />
+        </Route>
+
+        <Route path="/" element={<Layout />}>
+          <Route
+            path="cart"
+            element={
+              !authReady
+                ? authPendingFallback
+                : isLogin
+                  ? <CartPage />
+                  : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/cart", mode: "login" }} />
+            }
+          />
+          <Route
+            path="checkout"
+            element={
+              !authReady
+                ? authPendingFallback
+                : isLogin
+                  ? <CheckoutPage />
+                  : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/checkout", mode: "login" }} />
+            }
+          />
+          <Route
+            path="orderpage"
+            element={
+              !authReady
+                ? authPendingFallback
+                : isLogin
+                  ? <OrderPage />
+                  : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/orderpage", mode: "login" }} />
+            }
+          />
+          <Route path="track-order/:orderId" element={<TrackOrderPage />} />
+          <Route
+            path="dispute/:orderId"
+            element={
+              !authReady
+                ? authPendingFallback
+                : isLogin
+                  ? <DisputePage />
+                  : <Navigate to="/authpage?mode=login" replace state={{ mode: "login" }} />
+            }
+          />
+        </Route>
+
         <Route
-          path="messages"
+          path="/seller/*"
           element={
             !authReady
-              ? null
-              : isLogin
-                ? <BuyerMessages />
-                : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/messages", mode: "login" }} />
+              ? authPendingFallback
+              : isLogin && user?.roles?.includes("seller")
+                ? <SellerLayout />
+                : <Navigate to="/" replace />
           }
-        />
-      </Route>
+        >
+          <Route index element={<SellerDashboard />} />
+          <Route path="products" element={<SellerProducts />} />
+          <Route path="orders" element={<SellerOrders />} />
+          <Route path="analytics" element={<SellerAnalytics />} />
+          <Route path="messages" element={<SellerMessages />} />
+          <Route path="payouts" element={<SellerPayouts />} />
+          <Route path="customers" element={<SellersCustomers />} />
+          <Route path="settings" element={<SellerSettings />} />
+        </Route>
 
-   
-      <Route path="/" element={<Layout />}>
-        <Route 
-          path="cart" 
+        <Route
+          path="/admin/*"
           element={
             !authReady
-              ? null
-              : isLogin
-                ? <CartPage />
-                : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/cart", mode: "login" }} />
+              ? authPendingFallback
+              : isLogin && user?.roles?.includes("admin")
+                ? <AdminLayout />
+                : <Navigate to="/authpage?mode=login&role=admin" replace state={{ mode: "login" }} />
           }
-        />
-        <Route 
-          path="checkout" 
-          element={
-            !authReady
-              ? null
-              : isLogin
-                ? <CheckoutPage />
-                : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/checkout", mode: "login" }} />
-          }
-        />
-        <Route 
-          path="orderpage" 
-          element={
-            !authReady
-              ? null
-              : isLogin
-                ? <OrderPage />
-                : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/orderpage", mode: "login" }} />
-          }
-        />
-        <Route path="track-order/:orderId" element={<TrackOrderPage />} />
-        <Route 
-          path="dispute/:orderId" 
-          element={
-            !authReady
-              ? null
-              : isLogin
-                ? <DisputePage />
-                : <Navigate to="/authpage?mode=login" replace state={{ mode: "login" }} />
-          }
-        />
-      </Route>
-
-    
-<Route 
-  path="/seller/*" 
-   element={
-    !authReady
-      ? null
-      : isLogin && user?.roles?.includes("seller")
-      ? <SellerLayout /> 
-      : <Navigate to="/" replace />
-  }
->
-  <Route index element={<SellerDashboard />} />
-  <Route path="products" element={<SellerProducts />} />
-  <Route path="orders" element={<SellerOrders />} />
-  <Route path="analytics" element={<SellerAnalytics />} />
-  <Route path="messages" element={<SellerMessages />} />
-  <Route path="payouts" element={<SellerPayouts/>} />
-  <Route path="customers" element={<SellersCustomers />} />
-  <Route path="settings" element={<SellerSettings />} />
-</Route>
-
-<Route
-  path="/admin/*"
-  element={
-    !authReady
-      ? null
-      : isLogin && user?.roles?.includes("admin")
-      ? <AdminLayout />
-      : <Navigate to="/authpage?mode=login&role=admin" replace state={{ mode: "login" }} />
-  }
->
-  <Route index element={<Navigate to="dashboard" replace />} />
-  <Route path="dashboard" element={<AdminDashboard />} />
-</Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <PageSkeleton visible={showPageSkeleton} />
+    </>
   );
 }
 

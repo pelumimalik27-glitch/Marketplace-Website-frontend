@@ -3,16 +3,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Star, Truck, Shield, ChevronLeft, Heart } from "lucide-react";
 import { AppContext } from "../../contexts/AppContext";
 import { fetchProductById, fetchProducts, subscribeProductUpdates } from "../../lib/productApi";
+import { createConversation } from "../../lib/sellerApi";
 import { formatNaira } from "../../lib/currency";
 
 function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, cart, updateQuantity, isLogin } = useContext(AppContext);
+  const { addToCart, cart, updateQuantity, isLogin, user } = useContext(AppContext);
   const [product, setProduct] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [messageLoading, setMessageLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
@@ -117,6 +119,7 @@ function ProductDetailPage() {
   const productImages = product.images?.length ? product.images : [product.image];
   const displayedImage = productImages[selectedImage] || product.image;
   const sellerDisplayName = String(product.sellerName || product.seller || "").trim();
+  const sellerUserId = String(product.sellerUserId || "").trim();
   const sellerRating = Number(product.rating || 0);
   const sellerReviews = Number(product.reviews || 0);
   const stockQty = Number(product?.inventory?.quantity ?? 0);
@@ -128,6 +131,33 @@ function ProductDetailPage() {
   const similarProducts = allProducts
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
+
+  const handleMessageSeller = async () => {
+    if (!user?.userId || !sellerUserId) {
+      setError("Seller messaging is unavailable for this product.");
+      return;
+    }
+
+    try {
+      setMessageLoading(true);
+      setError("");
+      const response = await createConversation(
+        [user.userId, sellerUserId],
+        "",
+        { productId: product.id }
+      );
+      const conversationId = String(response?.data?._id || "").trim();
+      navigate(
+        conversationId
+          ? `/messages?conversation=${encodeURIComponent(conversationId)}`
+          : "/messages"
+      );
+    } catch (err) {
+      setError(err.message || "Failed to start conversation");
+    } finally {
+      setMessageLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-3 py-6 sm:px-4 sm:py-8">
@@ -232,7 +262,14 @@ function ProductDetailPage() {
                   </span>
                 </div>
               </div>
-              <button className="font-medium text-orange-600 hover:text-orange-700">Visit Store</button>
+              <button
+                type="button"
+                onClick={handleMessageSeller}
+                disabled={!sellerUserId || messageLoading}
+                className="font-medium text-orange-600 hover:text-orange-700 disabled:cursor-not-allowed disabled:text-gray-400"
+              >
+                {messageLoading ? "Opening chat..." : "Message Seller"}
+              </button>
             </div>
           </div>
 

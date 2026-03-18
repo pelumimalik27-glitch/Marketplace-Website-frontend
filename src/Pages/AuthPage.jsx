@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react'
 import { AppContext } from '../contexts/AppContext';
 import { useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Store, User, Shield, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { ArrowLeftCircle } from 'lucide-react';
 import { buildApiUrl } from "../lib/api";
 function AuthPage() {
@@ -167,9 +167,11 @@ function AuthPage() {
         </button>
         
         <div className={`text-center ${isCompact ? "mb-4 sm:mb-5" : "mb-6 sm:mb-8"}`}>
-          <div className={`inline-flex items-center justify-center rounded-full bg-orange-600 ${isCompact ? "mb-3 h-12 w-12" : "mb-4 h-14 w-14 sm:h-16 sm:w-16"}`}>
-            <Store size={isCompact ? 22 : 28} className="text-white sm:h-8 sm:w-8" />
-          </div>
+          <img
+            src="/images/Logo.png"
+            alt="Elite Marketplace logo"
+            className={`mx-auto object-contain ${isCompact ? "mb-3 h-12 w-12" : "mb-4 h-14 w-14 sm:h-16 sm:w-16"}`}
+          />
           <h1 className={`${isCompact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"} font-bold text-gray-900`}>Elite Marketplace</h1>
           <p className="mt-1.5 text-sm text-gray-600 sm:text-base">
             {isLogin ? "Sign in to your account" : "Create a new account"}

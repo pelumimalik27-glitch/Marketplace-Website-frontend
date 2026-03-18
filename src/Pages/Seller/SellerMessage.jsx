@@ -30,6 +30,16 @@ const formatDateTime = (value) => {
   })}`;
 };
 
+const formatAutoReplyMeta = (message) => {
+  if (!message?.isAutomated) return "";
+  const waitedMs = Number(message?.automationMeta?.waitedMs) || 0;
+  const waitedMinutes = waitedMs > 0 ? Math.max(1, Math.round(waitedMs / 60000)) : 0;
+  const fallbackLabel = message?.automationMeta?.isFallback ? "fallback" : "AI";
+  return waitedMinutes > 0
+    ? `${fallbackLabel} reply after ${waitedMinutes} min`
+    : `${fallbackLabel} reply`;
+};
+
 const customerLabel = (customer, id) =>
   customer?.name || customer?.email || `Customer ${String(id).slice(-6)}`;
 
@@ -113,6 +123,7 @@ function SellerMessages() {
         return {
           ...conversation,
           otherId,
+          relatedProductName: conversation?.context?.relatedProductName || "",
           title: customerLabel(customer, otherId || conversation?._id),
         };
       })
@@ -363,6 +374,11 @@ function SellerMessages() {
               }`}
             >
               <p className="text-sm font-medium text-gray-900">{conversation.title}</p>
+              {conversation.relatedProductName && (
+                <p className="mt-1 truncate text-[11px] font-medium text-orange-700">
+                  About: {conversation.relatedProductName}
+                </p>
+              )}
               <p className="mt-1 truncate text-xs text-gray-600">{conversation.lastMessage || "-"}</p>
             </button>
           ))}
@@ -395,6 +411,11 @@ function SellerMessages() {
                 ? `Last update: ${formatDateTime(activeConversation.updatedAt)}`
                 : "No active conversation"}
             </p>
+            {activeConversation?.context?.relatedProductName && (
+              <p className="mt-1 text-xs font-medium text-orange-700">
+                Product: {activeConversation.context.relatedProductName}
+              </p>
+            )}
           </div>
           <button
             onClick={loadInbox}
@@ -432,9 +453,17 @@ function SellerMessages() {
                       : "rounded-bl-none border border-slate-200 bg-white text-slate-900"
                   }`}
                 >
+                  {message?.isAutomated && (
+                    <span className="mb-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
+                      AI auto-reply
+                    </span>
+                  )}
                   <p>{message?.content || ""}</p>
                   <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-gray-500">
-                    <span>{formatDateTime(message?.createdAt)}</span>
+                    <span>
+                      {formatDateTime(message?.createdAt)}
+                      {message?.isAutomated ? ` • ${formatAutoReplyMeta(message)}` : ""}
+                    </span>
                     <button
                       type="button"
                       onClick={() => handleDeleteMessage(message?._id)}

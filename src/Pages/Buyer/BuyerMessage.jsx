@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Search, Send, Trash2 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { AppContext } from "../../contexts/AppContext";
 import {
   fetchConversationMessages,
@@ -27,11 +28,22 @@ const formatDateTime = (value) => {
   })}`;
 };
 
+const formatAutoReplyMeta = (message) => {
+  if (!message?.isAutomated) return "";
+  const waitedMs = Number(message?.automationMeta?.waitedMs) || 0;
+  const waitedMinutes = waitedMs > 0 ? Math.max(1, Math.round(waitedMs / 60000)) : 0;
+  const fallbackLabel = message?.automationMeta?.isFallback ? "fallback" : "AI";
+  return waitedMinutes > 0
+    ? `${fallbackLabel} reply after ${waitedMinutes} min`
+    : `${fallbackLabel} reply`;
+};
+
 const partnerLabel = (participant, fallbackId) =>
   participant?.name || participant?.email || `User ${String(fallbackId || "").slice(-6)}`;
 
 function BuyerMessages() {
   const { user, refreshUnreadMessages } = useContext(AppContext);
+  const [searchParams] = useSearchParams();
   const bottomRef = useRef(null);
   const activeConversationRef = useRef("");
 
@@ -78,6 +90,7 @@ function BuyerMessages() {
         return {
           ...conversation,
           partnerId,
+          relatedProductName: conversation?.context?.relatedProductName || "",
           title: partnerLabel(
             typeof partner === "object" ? partner : null,
             partnerId || conversation?._id
@@ -153,6 +166,14 @@ function BuyerMessages() {
     loadInbox();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.userId]);
+
+  useEffect(() => {
+    const requestedConversationId = String(searchParams.get("conversation") || "").trim();
+    if (!requestedConversationId) return;
+    if (!conversationRows.some((item) => String(item?._id || "") === requestedConversationId)) return;
+    if (String(activeConversationId || "") === requestedConversationId) return;
+    setActiveConversationId(requestedConversationId);
+  }, [activeConversationId, conversationRows, searchParams]);
 
   useEffect(() => {
     if (!activeConversationId && conversationRows.length > 0) {
@@ -310,6 +331,11 @@ function BuyerMessages() {
                 }`}
               >
                 <p className="text-sm font-medium text-gray-900">{conversation.title}</p>
+                {conversation.relatedProductName && (
+                  <p className="mt-1 truncate text-[11px] font-medium text-orange-700">
+                    About: {conversation.relatedProductName}
+                  </p>
+                )}
                 <p className="mt-1 truncate text-xs text-gray-600">{conversation.lastMessage || "-"}</p>
               </button>
             ))}
@@ -327,6 +353,11 @@ function BuyerMessages() {
                   ? `Last update: ${formatDateTime(activeConversation.updatedAt)}`
                   : "No active conversation"}
               </p>
+              {activeConversation?.context?.relatedProductName && (
+                <p className="mt-1 text-xs font-medium text-orange-700">
+                  Product: {activeConversation.context.relatedProductName}
+                </p>
+              )}
             </div>
             <button
               onClick={loadInbox}
@@ -364,9 +395,17 @@ function BuyerMessages() {
                           : "rounded-bl-none border border-slate-200 bg-white text-slate-900"
                       }`}
                     >
+                      {message?.isAutomated && (
+                        <span className="mb-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-600">
+                          AI auto-reply
+                        </span>
+                      )}
                       <p>{message?.content || ""}</p>
                       <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-gray-500">
-                        <span>{formatDateTime(message?.createdAt)}</span>
+                        <span>
+                          {formatDateTime(message?.createdAt)}
+                          {message?.isAutomated ? ` • ${formatAutoReplyMeta(message)}` : ""}
+                        </span>
                         <button
                           type="button"
                           onClick={() => handleDeleteMessage(message?._id)}

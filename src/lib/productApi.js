@@ -46,6 +46,7 @@ const fingerprint = (item = {}) => {
 
 const normalize = (item = {}) => {
   const sellerId = asId(item.sellerId || item.seller);
+  const sellerUserId = asId(item?.sellerUserId || item?.sellerId?.user);
   const inventoryQty = toNumber(item?.inventory?.quantity, 0);
 
   return {
@@ -53,6 +54,7 @@ const normalize = (item = {}) => {
     id: asId(item.id || item._id),
     _id: asId(item._id || item.id),
     sellerId: sellerId || "unknown-seller",
+    sellerUserId: sellerUserId || "",
     seller:
       item?.sellerName ||
       item?.sellerId?.storeName ||

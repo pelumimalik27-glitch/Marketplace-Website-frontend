@@ -19,6 +19,10 @@ const defaultForm = {
   accountName: "",
   idNumber: "",
   verificationNotes: "",
+  offlineAutoReplyEnabled: false,
+  offlineAutoReplyDelayMinutes: 3,
+  offlineAutoReplyPrompt: "",
+  offlineAutoReplyFallback: "",
 };
 
 function SellerSettings() {
@@ -57,6 +61,10 @@ function SellerSettings() {
         accountName: profile?.accountName || "",
         idNumber: profile?.idNumber || "",
         verificationNotes: profile?.verificationNotes || "",
+        offlineAutoReplyEnabled: Boolean(profile?.offlineAutoReplyEnabled),
+        offlineAutoReplyDelayMinutes: Number(profile?.offlineAutoReplyDelayMinutes) || 3,
+        offlineAutoReplyPrompt: profile?.offlineAutoReplyPrompt || "",
+        offlineAutoReplyFallback: profile?.offlineAutoReplyFallback || "",
       });
     } catch (err) {
       setError(err.message || "Failed to load seller settings");
@@ -70,8 +78,8 @@ function SellerSettings() {
   }, [user?.userId]);
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = event.target;
+    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleBankSelect = (event) => {
@@ -122,6 +130,13 @@ function SellerSettings() {
         accountName: form.accountName.trim(),
         idNumber: form.idNumber.trim(),
         verificationNotes: form.verificationNotes.trim(),
+        offlineAutoReplyEnabled: Boolean(form.offlineAutoReplyEnabled),
+        offlineAutoReplyDelayMinutes: Math.min(
+          15,
+          Math.max(1, Number(form.offlineAutoReplyDelayMinutes) || 3)
+        ),
+        offlineAutoReplyPrompt: form.offlineAutoReplyPrompt.trim(),
+        offlineAutoReplyFallback: form.offlineAutoReplyFallback.trim(),
       };
 
       const response = await updateSellerProfile(sellerProfile._id, payload);
@@ -340,6 +355,75 @@ function SellerSettings() {
                   rows={3}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                 />
+              </div>
+              <div className="sm:col-span-2 rounded-xl border border-orange-200 bg-orange-50/60 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-sm font-semibold text-slate-900">AI auto-reply</h2>
+                    <p className="mt-1 text-xs text-slate-600">
+                      Send an automatic chat response if you do not reply within the grace period.
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      name="offlineAutoReplyEnabled"
+                      checked={form.offlineAutoReplyEnabled}
+                      onChange={handleChange}
+                      className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    Enable
+                  </label>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      Wait time before AI reply
+                    </label>
+                    <input
+                      type="number"
+                      name="offlineAutoReplyDelayMinutes"
+                      min="1"
+                      max="15"
+                      value={form.offlineAutoReplyDelayMinutes}
+                      onChange={handleChange}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      Choose how many minutes the system should wait for your manual reply before sending an automated response.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      AI instructions
+                    </label>
+                    <textarea
+                      name="offlineAutoReplyPrompt"
+                      value={form.offlineAutoReplyPrompt}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="Example: Mention business hours, ask buyers to include product name and size, and keep replies polite."
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                      Fallback reply
+                    </label>
+                    <textarea
+                      name="offlineAutoReplyFallback"
+                      value={form.offlineAutoReplyFallback}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="Used when the AI provider is not configured or unavailable."
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      The system waits for your selected delay, then sends at most one automated reply per conversation within a short cooldown window.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 

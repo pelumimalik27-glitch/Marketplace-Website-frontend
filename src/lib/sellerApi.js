@@ -183,10 +183,18 @@ export const deleteConversationMessage = async (messageId) => {
   });
 };
 
-export const createConversation = async (participants = [], lastMessage = "") => {
+export const createConversation = async (
+  participants = [],
+  lastMessage = "",
+  productContext = null
+) => {
   return request("/conversations", {
     method: "POST",
-    body: JSON.stringify({ participants, lastMessage }),
+    body: JSON.stringify({
+      participants,
+      lastMessage,
+      ...(productContext ? { productContext } : {}),
+    }),
   });
 };
 
