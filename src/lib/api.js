@@ -1,8 +1,15 @@
 const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
+const envDevBaseUrl = String(import.meta.env.VITE_DEV_API_BASE_URL || "").trim();
+const isDev = Boolean(import.meta.env.DEV);
+
 const resolveBaseUrl = () => {
+  if (isDev) {
+    return envDevBaseUrl;
+  }
+
   if (envBaseUrl) {
     if (
-      !import.meta.env.DEV &&
+      !isDev &&
       typeof window !== "undefined" &&
       window.location.protocol === "https:" &&
       envBaseUrl.startsWith("http://")
@@ -11,8 +18,6 @@ const resolveBaseUrl = () => {
     }
     return envBaseUrl;
   }
-
-  if (import.meta.env.DEV) return "";
 
   if (typeof window !== "undefined" && window.location?.origin) {
     console.warn(
@@ -33,4 +38,5 @@ export const buildApiUrl = (path = "") => {
 };
 
 export const getApiBaseUrl = () => API_BASE_URL;
-export const hasExplicitApiBaseUrl = () => Boolean(envBaseUrl);
+export const hasExplicitApiBaseUrl = () =>
+  Boolean(isDev ? envDevBaseUrl : envBaseUrl);
