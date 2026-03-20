@@ -4,7 +4,7 @@ const isDev = Boolean(import.meta.env.DEV);
 
 const resolveBaseUrl = () => {
   if (isDev) {
-    return envDevBaseUrl;
+    return envDevBaseUrl || envBaseUrl;
   }
 
   if (envBaseUrl) {
@@ -39,4 +39,4 @@ export const buildApiUrl = (path = "") => {
 
 export const getApiBaseUrl = () => API_BASE_URL;
 export const hasExplicitApiBaseUrl = () =>
-  Boolean(isDev ? envDevBaseUrl : envBaseUrl);
+  Boolean(isDev ? envDevBaseUrl || envBaseUrl : envBaseUrl);
