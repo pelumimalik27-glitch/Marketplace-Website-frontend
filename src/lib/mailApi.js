@@ -1,6 +1,7 @@
-import { buildApiUrl, getApiBaseUrl, hasExplicitApiBaseUrl } from "./api";
+import { buildApiUrlCandidates, getApiBaseUrl, hasExplicitApiBaseUrl } from "./api";
 
 const MAIL_API_VERSION_PREFIX = "/api/v1";
+const envMailFallbackBaseUrls = String(import.meta.env.VITE_MAIL_API_FALLBACK_BASE_URLS || "").trim();
 
 const normalizeAbsoluteBaseUrl = (value = "") => {
   const raw = String(value || "").trim().replace(/\/+$/, "");
@@ -26,27 +27,54 @@ const normalizeAbsoluteBaseUrl = (value = "") => {
   }
 };
 
-const buildMailRequestUrl = (path = "") => {
+const normalizeAbsoluteBaseUrlList = (value = "") =>
+  Array.from(
+    new Set(
+      String(value || "")
+        .split(",")
+        .map((entry) => normalizeAbsoluteBaseUrl(entry))
+        .filter(Boolean)
+    )
+  );
+
+const buildMailRequestUrlCandidates = (path = "") => {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   // In dev, keep OTP requests same-origin so Vite can proxy /api/v1/mail reliably.
   if (import.meta.env.DEV) {
-    return `${MAIL_API_VERSION_PREFIX}${normalizedPath}`;
+    return [`${MAIL_API_VERSION_PREFIX}${normalizedPath}`];
   }
 
+  const apiCandidates = buildApiUrlCandidates(path);
   const explicitMailBase = normalizeAbsoluteBaseUrl(import.meta.env.VITE_MAIL_API_BASE_URL || "");
-  if (explicitMailBase) {
-    return `${explicitMailBase}${MAIL_API_VERSION_PREFIX}${normalizedPath}`;
-  }
+  const fallbackMailBases = normalizeAbsoluteBaseUrlList(envMailFallbackBaseUrls);
 
-  return buildApiUrl(path);
+  const directMailCandidates = [
+    explicitMailBase,
+    ...fallbackMailBases,
+  ]
+    .filter(Boolean)
+    .map((baseUrl) => `${baseUrl}${MAIL_API_VERSION_PREFIX}${normalizedPath}`);
+
+  // Prefer main API gateway first; fallback to direct mail-service hosts.
+  return Array.from(new Set([...apiCandidates, ...directMailCandidates]));
 };
 
 const getMailBaseLabel = () => {
   if (import.meta.env.DEV) return "dev-proxy:/api/v1/mail";
 
-  const explicitMailBase = normalizeAbsoluteBaseUrl(import.meta.env.VITE_MAIL_API_BASE_URL || "");
-  if (explicitMailBase) return explicitMailBase;
+  const candidates = buildMailRequestUrlCandidates("/mail/send-otp");
+  if (candidates.length) {
+    return candidates
+      .map((url) => {
+        try {
+          return new URL(url).origin;
+        } catch (_) {
+          return url;
+        }
+      })
+      .join(", ");
+  }
 
   return getApiBaseUrl() || "unknown";
 };
@@ -92,14 +120,29 @@ const buildHtmlErrorMessage = (response, raw) => {
 
 const request = async (path, options = {}) => {
   let response;
+  let lastError = null;
+  const requestUrls = buildMailRequestUrlCandidates(path);
+
   try {
-    response = await fetch(buildMailRequestUrl(path), {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
-    });
+    for (const requestUrl of requestUrls) {
+      try {
+        response = await fetch(requestUrl, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+          },
+        });
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    if (!response) {
+      throw lastError || new Error("Failed to fetch");
+    }
   } catch (error) {
     const baseUrl = getMailBaseLabel();
     throw new Error(

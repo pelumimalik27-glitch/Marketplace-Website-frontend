@@ -1,5 +1,6 @@
 const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
 const envDevBaseUrl = String(import.meta.env.VITE_DEV_API_BASE_URL || "").trim();
+const envFallbackBaseUrls = String(import.meta.env.VITE_API_FALLBACK_BASE_URLS || "").trim();
 const isDev = Boolean(import.meta.env.DEV);
 const API_VERSION_PREFIX = "/api/v1";
 
@@ -29,6 +30,14 @@ const normalizeBaseUrl = (value) => {
 
 const normalizedEnvBaseUrl = normalizeBaseUrl(envBaseUrl);
 const normalizedEnvDevBaseUrl = normalizeBaseUrl(envDevBaseUrl);
+const normalizedFallbackBaseUrls = Array.from(
+  new Set(
+    envFallbackBaseUrls
+      .split(",")
+      .map((entry) => normalizeBaseUrl(entry))
+      .filter(Boolean)
+  )
+);
 
 const resolveBaseUrl = () => {
   if (isDev) {
@@ -59,9 +68,22 @@ const resolveBaseUrl = () => {
 
 const API_BASE_URL = resolveBaseUrl().replace(/\/+$/, "");
 
+export const getApiBaseUrlCandidates = () => {
+  const primary = API_BASE_URL;
+  const ordered = [primary, ...normalizedFallbackBaseUrls].filter(Boolean);
+  return Array.from(new Set(ordered));
+};
+
 export const buildApiUrl = (path = "") => {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE_URL}${API_VERSION_PREFIX}${normalizedPath}`;
+};
+
+export const buildApiUrlCandidates = (path = "") => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return getApiBaseUrlCandidates().map(
+    (baseUrl) => `${baseUrl}${API_VERSION_PREFIX}${normalizedPath}`
+  );
 };
 
 export const getApiBaseUrl = () => API_BASE_URL;

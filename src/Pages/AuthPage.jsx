@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { ArrowLeftCircle } from 'lucide-react';
-import { buildApiUrl } from "../lib/api";
+import { buildApiUrlCandidates } from "../lib/api";
 function AuthPage() {
   const { handleLogin } = useContext(AppContext);
   const navigate = useNavigate();
@@ -63,25 +63,40 @@ function AuthPage() {
       return;
     }
 
-    const endpoint = isLogin
+    const authPath = isLogin
       ? isAdminFlow
-        ? buildApiUrl("/auth/admin/login")
-        : buildApiUrl("/auth/login")
-      : buildApiUrl("/auth/register");
+        ? "/auth/admin/login"
+        : "/auth/login"
+      : "/auth/register";
+
+    const endpointCandidates = buildApiUrlCandidates(authPath);
+    let response;
+    let networkError = null;
     
   try {
-    
-    const response = await fetch (endpoint,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        name:formData.name,
-        email: formData.email,
-      password: formData.password
-      })
-    })
+    for (const endpoint of endpointCandidates) {
+      try {
+        response = await fetch(endpoint, {
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify({
+            name:formData.name,
+            email: formData.email,
+            password: formData.password
+          })
+        });
+        networkError = null;
+        break;
+      } catch (error) {
+        networkError = error;
+      }
+    }
+
+    if (!response) {
+      throw networkError || new Error("Failed to fetch");
+    }
 
       const rawText = await response.text();
       let data = {};
@@ -147,8 +162,8 @@ function AuthPage() {
     console.error(error)
      setError(
       error?.message
-        ? `Could not reach server (${error.message}). Check backend is running.`
-        : "Could not reach server. Check backend is running."
+        ? `Could not reach server (${error.message}). Check backend URL/CORS and that server is running.`
+        : "Could not reach server. Check backend URL/CORS and that server is running."
      );
   }
   } 
