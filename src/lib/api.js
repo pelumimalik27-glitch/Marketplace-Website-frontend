@@ -1,22 +1,50 @@
 const envBaseUrl = String(import.meta.env.VITE_API_BASE_URL || "").trim();
 const envDevBaseUrl = String(import.meta.env.VITE_DEV_API_BASE_URL || "").trim();
 const isDev = Boolean(import.meta.env.DEV);
+const API_VERSION_PREFIX = "/api/v1";
+
+const normalizeBaseUrl = (value) => {
+  const raw = String(value || "").trim().replace(/\/+$/, "");
+  if (!raw) return "";
+
+  let candidate = raw;
+  if (!/^[a-z][a-z\d+\-.]*:\/\//i.test(candidate)) {
+    if (candidate.startsWith("//")) {
+      candidate = `https:${candidate}`;
+    } else if (/^(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(candidate)) {
+      candidate = `http://${candidate}`;
+    } else {
+      candidate = `https://${candidate}`;
+    }
+  }
+
+  try {
+    const url = new URL(candidate);
+    const safePath = url.pathname.replace(/\/+$/, "").replace(/\/api\/v1$/i, "");
+    return `${url.origin}${safePath}`.replace(/\/+$/, "");
+  } catch (_) {
+    return "";
+  }
+};
+
+const normalizedEnvBaseUrl = normalizeBaseUrl(envBaseUrl);
+const normalizedEnvDevBaseUrl = normalizeBaseUrl(envDevBaseUrl);
 
 const resolveBaseUrl = () => {
   if (isDev) {
-    return envDevBaseUrl || envBaseUrl;
+    return normalizedEnvDevBaseUrl || normalizedEnvBaseUrl || "http://localhost:6001";
   }
 
-  if (envBaseUrl) {
+  if (normalizedEnvBaseUrl) {
     if (
       !isDev &&
       typeof window !== "undefined" &&
       window.location.protocol === "https:" &&
-      envBaseUrl.startsWith("http://")
+      normalizedEnvBaseUrl.startsWith("http://")
     ) {
-      return envBaseUrl.replace(/^http:\/\//i, "https://");
+      return normalizedEnvBaseUrl.replace(/^http:\/\//i, "https://");
     }
-    return envBaseUrl;
+    return normalizedEnvBaseUrl;
   }
 
   if (typeof window !== "undefined" && window.location?.origin) {
@@ -30,7 +58,6 @@ const resolveBaseUrl = () => {
 };
 
 const API_BASE_URL = resolveBaseUrl().replace(/\/+$/, "");
-const API_VERSION_PREFIX = "/api/v1";
 
 export const buildApiUrl = (path = "") => {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -39,4 +66,4 @@ export const buildApiUrl = (path = "") => {
 
 export const getApiBaseUrl = () => API_BASE_URL;
 export const hasExplicitApiBaseUrl = () =>
-  Boolean(isDev ? envDevBaseUrl || envBaseUrl : envBaseUrl);
+  Boolean(isDev ? normalizedEnvDevBaseUrl || normalizedEnvBaseUrl : normalizedEnvBaseUrl);
