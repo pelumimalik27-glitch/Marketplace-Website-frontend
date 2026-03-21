@@ -1,6 +1,7 @@
 import { buildApiUrlCandidates, getApiBaseUrl, hasExplicitApiBaseUrl } from "./api";
 
 const MAIL_API_VERSION_PREFIX = "/api/v1";
+const DEFAULT_MAIL_SERVICE_BASE_URL = "https://marketplace-website-backend-e6q0.onrender.com";
 const envMailFallbackBaseUrls = String(import.meta.env.VITE_MAIL_API_FALLBACK_BASE_URLS || "").trim();
 
 const normalizeAbsoluteBaseUrl = (value = "") => {
@@ -46,7 +47,9 @@ const buildMailRequestUrlCandidates = (path = "") => {
   }
 
   const apiCandidates = buildApiUrlCandidates(path);
-  const explicitMailBase = normalizeAbsoluteBaseUrl(import.meta.env.VITE_MAIL_API_BASE_URL || "");
+  const explicitMailBase = normalizeAbsoluteBaseUrl(
+    import.meta.env.VITE_MAIL_API_BASE_URL || DEFAULT_MAIL_SERVICE_BASE_URL
+  );
   const fallbackMailBases = normalizeAbsoluteBaseUrlList(envMailFallbackBaseUrls);
 
   const directMailCandidates = [
@@ -56,8 +59,8 @@ const buildMailRequestUrlCandidates = (path = "") => {
     .filter(Boolean)
     .map((baseUrl) => `${baseUrl}${MAIL_API_VERSION_PREFIX}${normalizedPath}`);
 
-  // Prefer main API gateway first; fallback to direct mail-service hosts.
-  return Array.from(new Set([...apiCandidates, ...directMailCandidates]));
+  // Prefer direct mail-service hosts first in production, then API gateway candidates.
+  return Array.from(new Set([...directMailCandidates, ...apiCandidates]));
 };
 
 const getMailBaseLabel = () => {
@@ -120,19 +123,36 @@ const buildHtmlErrorMessage = (response, raw) => {
 
 const request = async (path, options = {}) => {
   let response;
+  let raw = "";
   let lastError = null;
   const requestUrls = buildMailRequestUrlCandidates(path);
+  const retryableErrorPattern =
+    /error occurred while trying to proxy|mail service unavailable|bad gateway|gateway timeout|upstream/i;
 
   try {
-    for (const requestUrl of requestUrls) {
+    for (let index = 0; index < requestUrls.length; index += 1) {
+      const requestUrl = requestUrls[index];
+      const hasMoreCandidates = index < requestUrls.length - 1;
+
       try {
-        response = await fetch(requestUrl, {
+        const currentResponse = await fetch(requestUrl, {
           ...options,
           headers: {
             "Content-Type": "application/json",
             ...(options.headers || {}),
           },
         });
+
+        const currentRaw = await currentResponse.text();
+        const isRetryableStatus = currentResponse.status >= 500;
+        const isRetryableBody = retryableErrorPattern.test(currentRaw);
+
+        if (hasMoreCandidates && !currentResponse.ok && (isRetryableStatus || isRetryableBody)) {
+          continue;
+        }
+
+        response = currentResponse;
+        raw = currentRaw;
         lastError = null;
         break;
       } catch (error) {
@@ -150,7 +170,6 @@ const request = async (path, options = {}) => {
     );
   }
 
-  const raw = await response.text();
   let payload = {};
   if (raw) {
     try {
