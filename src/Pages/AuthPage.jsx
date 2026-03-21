@@ -72,6 +72,7 @@ function AuthPage() {
     const endpointCandidates = buildApiUrlCandidates(authPath);
     let response;
     let networkError = null;
+    const failedEndpoints = [];
     
   try {
     for (const endpoint of endpointCandidates) {
@@ -90,12 +91,15 @@ function AuthPage() {
         networkError = null;
         break;
       } catch (error) {
+        failedEndpoints.push(endpoint);
         networkError = error;
       }
     }
 
     if (!response) {
-      throw networkError || new Error("Failed to fetch");
+      const failedLabel = failedEndpoints.length ? ` Tried: ${failedEndpoints.join(", ")}` : "";
+      const baseMessage = networkError?.message || "Failed to fetch";
+      throw new Error(`${baseMessage}.${failedLabel}`.trim());
     }
 
       const rawText = await response.text();

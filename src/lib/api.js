@@ -70,7 +70,11 @@ const API_BASE_URL = resolveBaseUrl().replace(/\/+$/, "");
 
 export const getApiBaseUrlCandidates = () => {
   const primary = API_BASE_URL;
-  const ordered = [primary, ...normalizedFallbackBaseUrls].filter(Boolean);
+  const browserOrigin =
+    typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin.replace(/\/+$/, "")
+      : "";
+  const ordered = [primary, ...normalizedFallbackBaseUrls, browserOrigin].filter(Boolean);
   return Array.from(new Set(ordered));
 };
 
