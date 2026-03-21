@@ -31,11 +31,21 @@ export default defineConfig(({ mode }) => {
     env.VITE_API_BASE_URL ||
     "http://localhost:6001"
   )
+  const mailProxyTarget = normalizeProxyTarget(
+    env.VITE_DEV_MAIL_API_BASE_URL ||
+    env.VITE_MAIL_API_BASE_URL ||
+    proxyTarget
+  )
 
   return {
     plugins: [react()],
     server: {
       proxy: {
+        "/api/v1/mail": {
+          target: mailProxyTarget,
+          changeOrigin: true,
+          secure: false,
+        },
         "/api": {
           target: proxyTarget,
           changeOrigin: true,

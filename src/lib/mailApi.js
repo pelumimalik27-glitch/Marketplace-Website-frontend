@@ -1,5 +1,56 @@
 import { buildApiUrl, getApiBaseUrl, hasExplicitApiBaseUrl } from "./api";
 
+const MAIL_API_VERSION_PREFIX = "/api/v1";
+
+const normalizeAbsoluteBaseUrl = (value = "") => {
+  const raw = String(value || "").trim().replace(/\/+$/, "");
+  if (!raw) return "";
+
+  let candidate = raw;
+  if (!/^[a-z][a-z\d+\-.]*:\/\//i.test(candidate)) {
+    if (candidate.startsWith("//")) {
+      candidate = `https:${candidate}`;
+    } else if (/^(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(candidate)) {
+      candidate = `http://${candidate}`;
+    } else {
+      candidate = `https://${candidate}`;
+    }
+  }
+
+  try {
+    const url = new URL(candidate);
+    const safePath = url.pathname.replace(/\/+$/, "").replace(/\/api\/v1$/i, "");
+    return `${url.origin}${safePath}`.replace(/\/+$/, "");
+  } catch (_) {
+    return "";
+  }
+};
+
+const buildMailRequestUrl = (path = "") => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  // In dev, keep OTP requests same-origin so Vite can proxy /api/v1/mail reliably.
+  if (import.meta.env.DEV) {
+    return `${MAIL_API_VERSION_PREFIX}${normalizedPath}`;
+  }
+
+  const explicitMailBase = normalizeAbsoluteBaseUrl(import.meta.env.VITE_MAIL_API_BASE_URL || "");
+  if (explicitMailBase) {
+    return `${explicitMailBase}${MAIL_API_VERSION_PREFIX}${normalizedPath}`;
+  }
+
+  return buildApiUrl(path);
+};
+
+const getMailBaseLabel = () => {
+  if (import.meta.env.DEV) return "dev-proxy:/api/v1/mail";
+
+  const explicitMailBase = normalizeAbsoluteBaseUrl(import.meta.env.VITE_MAIL_API_BASE_URL || "");
+  if (explicitMailBase) return explicitMailBase;
+
+  return getApiBaseUrl() || "unknown";
+};
+
 const stripHtml = (value = "") =>
   String(value)
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -42,7 +93,7 @@ const buildHtmlErrorMessage = (response, raw) => {
 const request = async (path, options = {}) => {
   let response;
   try {
-    response = await fetch(buildApiUrl(path), {
+    response = await fetch(buildMailRequestUrl(path), {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -50,9 +101,9 @@ const request = async (path, options = {}) => {
       },
     });
   } catch (error) {
-    const baseUrl = getApiBaseUrl() || "unknown";
+    const baseUrl = getMailBaseLabel();
     throw new Error(
-      `Could not reach server. Check VITE_API_BASE_URL and CORS. Base URL: ${baseUrl}`
+      `Could not reach OTP server. Check mail API URL/proxy and CORS. Base URL: ${baseUrl}`
     );
   }
 
