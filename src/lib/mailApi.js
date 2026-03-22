@@ -1,4 +1,4 @@
-import { buildApiUrlCandidates, getApiBaseUrl, hasExplicitApiBaseUrl } from "./api";
+import { getApiBaseUrl, hasExplicitApiBaseUrl } from "./api";
 
 const MAIL_API_VERSION_PREFIX = "/api/v1";
 const DEFAULT_MAIL_SERVICE_BASE_URL = "https://marketplace-website-backend-e6q0.onrender.com";
@@ -46,7 +46,6 @@ const buildMailRequestUrlCandidates = (path = "") => {
     return [`${MAIL_API_VERSION_PREFIX}${normalizedPath}`];
   }
 
-  const apiCandidates = buildApiUrlCandidates(path);
   const explicitMailBase = normalizeAbsoluteBaseUrl(
     import.meta.env.VITE_MAIL_API_BASE_URL || DEFAULT_MAIL_SERVICE_BASE_URL
   );
@@ -59,8 +58,8 @@ const buildMailRequestUrlCandidates = (path = "") => {
     .filter(Boolean)
     .map((baseUrl) => `${baseUrl}${MAIL_API_VERSION_PREFIX}${normalizedPath}`);
 
-  // Prefer direct mail-service hosts first in production, then API gateway candidates.
-  return Array.from(new Set([...directMailCandidates, ...apiCandidates]));
+  // Production: bypass API gateway proxy entirely, call mail service directly.
+  return Array.from(new Set(directMailCandidates));
 };
 
 const getMailBaseLabel = () => {
