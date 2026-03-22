@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/v1/mail/(.*)",
+      "destination": "https://marketplace-website-backend-e6q0.onrender.com/api/v1/mail/$1"
+    },
+    {
       "source": "/api/v1/(.*)",
       "destination": "https://marketplace-website-backend-node-http.onrender.com/api/v1/$1"
     },

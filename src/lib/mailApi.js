@@ -46,6 +46,7 @@ const buildMailRequestUrlCandidates = (path = "") => {
     return [`${MAIL_API_VERSION_PREFIX}${normalizedPath}`];
   }
 
+  const sameOriginCandidate = `${MAIL_API_VERSION_PREFIX}${normalizedPath}`;
   const explicitMailBase = normalizeAbsoluteBaseUrl(
     import.meta.env.VITE_MAIL_API_BASE_URL || DEFAULT_MAIL_SERVICE_BASE_URL
   );
@@ -58,8 +59,8 @@ const buildMailRequestUrlCandidates = (path = "") => {
     .filter(Boolean)
     .map((baseUrl) => `${baseUrl}${MAIL_API_VERSION_PREFIX}${normalizedPath}`);
 
-  // Production: bypass API gateway proxy entirely, call mail service directly.
-  return Array.from(new Set(directMailCandidates));
+  // Production: same-origin (Vercel rewrite) first, then direct mail-service hosts.
+  return Array.from(new Set([sameOriginCandidate, ...directMailCandidates]));
 };
 
 const getMailBaseLabel = () => {
@@ -69,6 +70,12 @@ const getMailBaseLabel = () => {
   if (candidates.length) {
     return candidates
       .map((url) => {
+        if (url.startsWith("/")) {
+          if (typeof window !== "undefined" && window.location?.origin) {
+            return `${window.location.origin.replace(/\/+$/, "")}${url}`;
+          }
+          return url;
+        }
         try {
           return new URL(url).origin;
         } catch (_) {
