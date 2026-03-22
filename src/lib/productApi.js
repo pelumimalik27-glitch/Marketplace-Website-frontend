@@ -1,4 +1,4 @@
-import { buildApiUrl } from "./api";
+import { buildApiUrlCandidates } from "./api";
 
 const PRODUCT_CACHE_KEY = "product_cache_v2";
 const LEGACY_CACHE_KEY = "cached_products";
@@ -6,6 +6,8 @@ const PRODUCT_UPDATE_EVENT = "products:updated";
 const hasLocalStorage =
   typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 const REQUEST_TIMEOUT_MS = 8000;
+const RETRYABLE_BODY_PATTERN =
+  /error occurred while trying to proxy|mail service unavailable|bad gateway|gateway timeout|upstream|route not found|cannot (get|post|patch|delete)/i;
 
 let lastProductFetchSource = "backend";
 const inFlightProductsByPath = new Map();
@@ -127,6 +129,16 @@ const isNetworkFailure = (error) => {
   );
 };
 
+const isRetryableHttpStatus = (status = 0) =>
+  Number(status) >= 500 || Number(status) === 404 || Number(status) === 405;
+
+const shouldTryNextEndpoint = ({ status, payload, rawBody, hasMore }) => {
+  if (!hasMore) return false;
+  if (isRetryableHttpStatus(status)) return true;
+  const details = `${payload?.message || ""} ${payload?.error || ""} ${rawBody || ""}`;
+  return RETRYABLE_BODY_PATTERN.test(details);
+};
+
 const dedupeProducts = (items = []) => {
   const seenIds = new Set();
   const seenFingerprint = new Set();
@@ -173,27 +185,59 @@ const applyOptions = (items = [], options = {}) => {
 };
 
 const requestProducts = async (path) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try {
-    const response = await fetch(buildApiUrl(path), {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(payload?.message || "Failed to load products");
+  const endpoints = buildApiUrlCandidates(path);
+  let lastError = null;
+
+  for (let index = 0; index < endpoints.length; index += 1) {
+    const endpoint = endpoints[index];
+    const hasMore = index < endpoints.length - 1;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+      });
+      const rawBody = await response.text();
+      let payload = {};
+      if (rawBody) {
+        try {
+          payload = JSON.parse(rawBody);
+        } catch (_) {
+          payload = {};
+        }
+      }
+
+      if (!response.ok) {
+        if (
+          shouldTryNextEndpoint({
+            status: response.status,
+            payload,
+            rawBody,
+            hasMore,
+          })
+        ) {
+          continue;
+        }
+        throw new Error(payload?.message || "Failed to load products");
+      }
+
+      return payload;
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        lastError = new Error("Request timeout");
+      } else {
+        lastError = error;
+      }
+      if (!hasMore) break;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    return payload;
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      throw new Error("Request timeout");
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  throw lastError || new Error("Failed to load products");
 };
 
 const buildProductsPath = (options = {}) => {
