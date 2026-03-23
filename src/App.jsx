@@ -75,7 +75,6 @@ function App() {
         <Route path="/forgot-password" element={<RequestPasswordReset />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/checkout/verify" element={<PaymentCallbackPage />} />
 
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
@@ -114,6 +113,7 @@ function App() {
                   : <Navigate to="/authpage?mode=login" replace state={{ redirectTo: "/checkout", mode: "login" }} />
             }
           />
+          <Route path="checkout/verify" element={<PaymentCallbackPage />} />
           <Route
             path="orderpage"
             element={

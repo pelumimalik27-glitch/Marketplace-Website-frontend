@@ -46,17 +46,17 @@ function PaymentCallbackPage() {
     <div
       className={`mx-auto mt-12 max-w-lg rounded-xl border p-6 text-center shadow-sm ${
         isSuccess
-          ? "border-emerald-300 bg-gradient-to-br from-emerald-50 via-white to-orange-50"
+          ? "border-4 border-orange-400 bg-emerald-600"
           : "border-slate-200 bg-white"
       }`}
     >
-      {isSuccess && <div className="mb-4 h-1 w-full rounded-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-orange-400" />}
-      <h1 className={`text-xl font-semibold ${isSuccess ? "text-emerald-800" : "text-slate-900"}`}>Payment Status</h1>
-      <p className={`mt-3 text-sm ${isSuccess ? "text-emerald-700" : "text-slate-600"}`}>{message}</p>
+      {isSuccess && <div className="mb-4 h-1 w-full rounded-full bg-orange-300" />}
+      <h1 className={`text-xl font-semibold ${isSuccess ? "text-white" : "text-slate-900"}`}>Payment Status</h1>
+      <p className={`mt-3 text-sm ${isSuccess ? "text-white" : "text-slate-600"}`}>{message}</p>
 
       {isSuccess && (
-        <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+        <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
+          <span className="h-2 w-2 rounded-full bg-emerald-600" />
           Payment confirmed
         </div>
       )}
