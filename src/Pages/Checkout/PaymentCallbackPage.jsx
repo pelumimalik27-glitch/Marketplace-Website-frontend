@@ -10,7 +10,14 @@ function PaymentCallbackPage() {
 
   const [status, setStatus] = useState("verifying");
   const [message, setMessage] = useState("Verifying your payment...");
+  const [paymentStatus, setPaymentStatus] = useState("");
   const isSuccess = status === "success";
+  const title =
+    status === "success"
+      ? "Updated Payment Status"
+      : status === "error"
+        ? "Payment Status Update Failed"
+        : "Updating Payment Status...";
 
   useEffect(() => {
     const reference = searchParams.get("reference");
@@ -23,11 +30,13 @@ function PaymentCallbackPage() {
     let mounted = true;
     const run = async () => {
       try {
-        await verifyPayment(reference);
+        const verification = await verifyPayment(reference);
         if (!mounted) return;
+        const verifiedStatus = String(verification?.data?.paymentStatus || "success").toUpperCase();
+        setPaymentStatus(verifiedStatus);
         clearCart();
         setStatus("success");
-        setMessage("Payment successful. Redirecting to your orders...");
+        setMessage(`Payment status updated to ${verifiedStatus}. Redirecting to your orders...`);
         setTimeout(() => navigate("/orderpage", { replace: true }), 1200);
       } catch (error) {
         if (!mounted) return;
@@ -51,13 +60,13 @@ function PaymentCallbackPage() {
       }`}
     >
       {isSuccess && <div className="mb-4 h-1 w-full rounded-full bg-orange-300" />}
-      <h1 className={`text-xl font-semibold ${isSuccess ? "text-white" : "text-slate-900"}`}>Payment Status</h1>
+      <h1 className={`text-xl font-semibold ${isSuccess ? "text-white" : "text-slate-900"}`}>{title}</h1>
       <p className={`mt-3 text-sm ${isSuccess ? "text-white" : "text-slate-600"}`}>{message}</p>
 
       {isSuccess && (
         <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800">
           <span className="h-2 w-2 rounded-full bg-emerald-600" />
-          Payment confirmed
+          {paymentStatus ? `Status: ${paymentStatus}` : "Payment confirmed"}
         </div>
       )}
 
