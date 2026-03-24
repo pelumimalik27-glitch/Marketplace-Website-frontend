@@ -69,6 +69,11 @@ function SellerLayout() {
     return undefined;
   }, []);
 
+  function handleSellerLogout() {
+    handleLogout();
+    navigate("/");
+  }
+
   const navItems = [
     { path: "/seller", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/seller/products", icon: Package, label: "Products" },
@@ -78,15 +83,11 @@ function SellerLayout() {
     { path: "/seller/customers", icon: Users, label: "Customers" },
     { path: "/seller/payouts", icon: DollarSign, label: "Wallet" },
     { path: "/seller/settings", icon: Settings, label: "Settings" },
+    { icon: LogOut, label: "Logout", action: handleSellerLogout },
   ];
 
   const isActive = (path) =>
     location.pathname === path || location.pathname.startsWith(`${path}/`);
-
-  const handleSellerLogout = () => {
-    handleLogout();
-    navigate("/");
-  };
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-orange-500 via-orange-50/40 to-white">
@@ -129,15 +130,6 @@ function SellerLayout() {
               <ArrowLeft size={16} />
               Store
             </button>
-
-            <button
-              type="button"
-              onClick={handleSellerLogout}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-300"
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
           </div>
         </div>
       </header>
@@ -161,19 +153,35 @@ function SellerLayout() {
             <nav className="flex flex-col gap-1 px-2 py-3">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const active = isActive(item.path);
+                const active = item.path ? isActive(item.path) : false;
+                if (item.path) {
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm ${
+                        active ? "bg-orange-500 text-white" : "text-slate-200 hover:bg-slate-800"
+                      }`}
+                    >
+                      <Icon size={16} />
+                      {item.label}
+                    </Link>
+                  );
+                }
                 return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMenuOpen(false)}
-                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm ${
-                      active ? "bg-orange-500 text-white" : "text-slate-200 hover:bg-slate-800"
-                    }`}
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      item.action?.();
+                    }}
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm text-red-300 hover:bg-slate-800 hover:text-red-200"
                   >
                     <Icon size={16} />
                     {item.label}
-                  </Link>
+                  </button>
                 );
               })}
             </nav>
@@ -192,21 +200,34 @@ function SellerLayout() {
           <nav className="flex-1 overflow-y-auto space-y-2" role="navigation">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const active = isActive(item.path);
+              const active = item.path ? isActive(item.path) : false;
+              if (item.path) {
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400 ${
+                      active
+                        ? "bg-orange-500 text-white shadow"
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <Icon size={16} />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              }
               return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  aria-current={active ? "page" : undefined}
-                  className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-orange-400 ${
-                    active
-                      ? "bg-orange-500 text-white shadow"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  }`}
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => item.action?.()}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm text-red-300 transition-colors hover:bg-slate-800 hover:text-red-200 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 >
                   <Icon size={16} />
                   <span className="truncate">{item.label}</span>
-                </Link>
+                </button>
               );
             })}
           </nav>

@@ -69,6 +69,33 @@
     0 0 24px rgba(246, 139, 30, 0.55);
 }
 
+.glow-cta-soft {
+  position: relative;
+  isolation: isolate;
+  box-shadow:
+    0 6px 14px rgba(246, 139, 30, 0.2),
+    0 0 10px rgba(246, 139, 30, 0.22);
+  transition: box-shadow 220ms ease, transform 220ms ease;
+}
+
+.glow-cta-soft::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(255, 201, 144, 0.42), rgba(255, 201, 144, 0));
+  filter: blur(9px);
+  animation: cta-glow-pulse 2.8s ease-in-out infinite;
+}
+
+.glow-cta-soft:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 20px rgba(246, 139, 30, 0.28),
+    0 0 14px rgba(246, 139, 30, 0.3);
+}
+
 .glow-cta:disabled {
   box-shadow: none;
 }
@@ -76,6 +103,15 @@
 .glow-cta:disabled::before {
   animation: none;
   opacity: 0.45;
+}
+
+.glow-cta-soft:disabled {
+  box-shadow: none;
+}
+
+.glow-cta-soft:disabled::before {
+  animation: none;
+  opacity: 0.35;
 }
 
 @keyframes trust-card-in {

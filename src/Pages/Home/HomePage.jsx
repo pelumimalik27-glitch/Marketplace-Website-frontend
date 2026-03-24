@@ -158,6 +158,8 @@ function HomePage() {
     if (applicationStatus === "rejected") return "Re-apply as Seller";
     return "Apply to Become Seller";
   })();
+  const sellerButtonGlowClass =
+    sellerButtonLabel === "Open Seller Dashboard" ? "glow-cta-soft" : "glow-cta";
 
   return (
     <div className="min-h-screen">
@@ -174,7 +176,7 @@ function HomePage() {
           type="button"
           onClick={handleOpenSellerFlow}
           disabled={checkingStatus || submitting}
-          className="glow-cta mt-6 rounded-lg bg-orange-700 px-6 py-3 font-semibold text-white transition hover:bg-gray-200 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+          className={`${sellerButtonGlowClass} mt-6 rounded-lg bg-orange-700 px-6 py-3 font-semibold text-white transition hover:bg-gray-200 hover:text-black disabled:cursor-not-allowed disabled:opacity-60`}
         >
           {checkingStatus ? "Checking..." : sellerButtonLabel}
         </button>

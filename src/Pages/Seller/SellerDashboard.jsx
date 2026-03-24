@@ -26,7 +26,7 @@ const labelize = (value) => {
 
 function SellerDashboard() {
   const navigate = useNavigate();
-  const { user, handleLogout } = useContext(AppContext);
+  const { user } = useContext(AppContext);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -133,7 +133,6 @@ function SellerDashboard() {
     { label: "Customers", path: "/seller/customers" },
     { label: "Payouts", path: "/seller/payouts" },
     { label: "Settings", path: "/seller/settings" },
-    { label: "Logout", action: handleLogout, tone: "danger" },
   ];
 
   return (
@@ -226,21 +225,9 @@ function SellerDashboard() {
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {quickActions.map((action) => (
                 <button
-                  key={action.path || action.label}
-                  onClick={() => {
-                    if (typeof action.action === "function") {
-                      action.action();
-                      return;
-                    }
-                    if (action.path) {
-                      navigate(action.path);
-                    }
-                  }}
-                  className={`rounded-lg border px-3 py-2 text-sm ${
-                    action.tone === "danger"
-                      ? "border-red-200 text-red-700 hover:bg-red-50"
-                      : "border-slate-200 text-slate-700 hover:bg-slate-100"
-                  }`}
+                  key={action.path}
+                  onClick={() => navigate(action.path)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
                 >
                   {action.label}
                 </button>
