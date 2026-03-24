@@ -17,9 +17,10 @@ function TrustSection() {
             return (
               <div
                 key={index}
-                className="group bg-slate-100 rounded-xl border border-gray-200 p-6 md:p-8 text-center transition-all duration-300 hover:border-orange-500/50 hover:shadow-xl hover:shadow-orange-100/60"
+                className="trust-card-enter group bg-slate-100 rounded-xl border border-gray-200 p-6 md:p-8 text-center transition-all duration-300 hover:border-orange-500/50 hover:shadow-xl hover:shadow-orange-100/60"
+                style={{ animationDelay: `${index * 120}ms` }}
               >
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-orange-50 text-orange-600 mb-5 group-hover:bg-orange-100 transition-colors">
+                <div className="trust-icon-anim inline-flex items-center justify-center w-14 h-14 rounded-full bg-orange-50 text-orange-600 mb-5 group-hover:bg-orange-100 transition-colors">
                   <Icon size={28} strokeWidth={2} />
                 </div>
 
