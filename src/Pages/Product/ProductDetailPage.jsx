@@ -6,6 +6,7 @@ import { LoadingSpinner, SkeletonBox } from "../../components/Loading/Storefront
 import { fetchProductById, fetchProducts, subscribeProductUpdates } from "../../lib/productApi";
 import { createConversation } from "../../lib/sellerApi";
 import { formatNaira } from "../../lib/currency";
+import { fetchProductReviews } from "../../lib/reviewApi";
 
 function ProductDetailPage() {
   const { id } = useParams();
@@ -17,6 +18,8 @@ function ProductDetailPage() {
   const [error, setError] = useState("");
   const [messageLoading, setMessageLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [productReviews, setProductReviews] = useState([]);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(false);
 
   useEffect(() => {
     if (!isLogin) {
@@ -38,20 +41,26 @@ function ProductDetailPage() {
 
       try {
         setIsLoading(true);
+        setIsReviewsLoading(true);
         setError("");
 
-        const [productData, listData] = await Promise.all([
+        const [productData, listData, reviewRows] = await Promise.all([
           fetchProductById(id),
           fetchProducts({ limit: 200, sort: "-createdAt" }),
+          fetchProductReviews(id).catch(() => []),
         ]);
 
         if (!isMounted) return;
         setProduct(productData);
         setAllProducts(listData);
+        setProductReviews(Array.isArray(reviewRows) ? reviewRows : []);
       } catch (err) {
         if (isMounted) setError(err.message || "Unable to load product");
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+          setIsReviewsLoading(false);
+        }
       }
     };
 
@@ -66,8 +75,12 @@ function ProductDetailPage() {
     return subscribeProductUpdates(async ({ productId } = {}) => {
       if (!productId || String(productId) !== String(product.id)) return;
       try {
-        const fresh = await fetchProductById(product.id);
+        const [fresh, latestReviews] = await Promise.all([
+          fetchProductById(product.id),
+          fetchProductReviews(product.id).catch(() => []),
+        ]);
         setProduct(fresh);
+        setProductReviews(Array.isArray(latestReviews) ? latestReviews : []);
       } catch (_) {
         // ignore refresh failures
       }
@@ -154,7 +167,8 @@ function ProductDetailPage() {
   const sellerDisplayName = String(product.sellerName || product.seller || "").trim();
   const sellerUserId = String(product.sellerUserId || "").trim();
   const sellerRating = Number(product.rating || 0);
-  const sellerReviews = Number(product.reviews || 0);
+  const sellerReviews =
+    productReviews.length > 0 ? productReviews.length : Number(product.reviews || 0);
   const stockQty = Number(product?.inventory?.quantity ?? 0);
   const rawInStock =
     typeof product?.inStock === "boolean" ? product.inStock : stockQty > 0;
@@ -238,7 +252,7 @@ function ProductDetailPage() {
                     className={i < Math.floor(product.rating) ? "fill-orange-500 text-orange-500" : "text-gray-300"}
                   />
                 ))}
-                <span className="ml-2 text-gray-600">({product.reviews} reviews)</span>
+                <span className="ml-2 text-gray-600">({sellerReviews} reviews)</span>
               </div>
               <span className={`font-semibold ${isInStock ? "text-green-600" : "text-red-600"}`}>
                 {isInStock ? `In Stock (${stockQty})` : "Out of Stock"}
@@ -380,6 +394,58 @@ function ProductDetailPage() {
             <p className="text-gray-600">
               {product.description || "No description available. This is a high-quality product from a trusted seller."}
             </p>
+          </div>
+
+          <div className="mt-8">
+            <h3 className="mb-4 text-xl font-bold">Customer Reviews</h3>
+            {isReviewsLoading ? (
+              <p className="text-sm text-gray-500">Loading reviews...</p>
+            ) : productReviews.length === 0 ? (
+              <p className="text-sm text-gray-600">No reviews yet</p>
+            ) : (
+              <div className="space-y-3">
+                {productReviews.slice(0, 5).map((review) => (
+                  <div
+                    key={review.id || review._id}
+                    className="rounded-lg border border-slate-200 bg-white p-3"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {review.userName || "Anonymous"}
+                        </p>
+                        {review.isVerifiedPurchase && (
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+                            Verified purchase
+                          </span>
+                        )}
+                      </div>
+                      {review.createdAt && (
+                        <p className="text-xs text-slate-500">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-2 flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={`${review.id || review._id}-star-${i}`}
+                          size={14}
+                          className={
+                            i < Math.floor(Number(review.rating || 0))
+                              ? "fill-orange-500 text-orange-500"
+                              : "text-gray-300"
+                          }
+                        />
+                      ))}
+                    </div>
+                    <p className="mt-2 text-sm text-slate-700">
+                      {review.comment || "No written feedback."}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
