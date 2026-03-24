@@ -312,7 +312,33 @@ function SellerMessages() {
       await sendConversationMessage(activeConversationId, user.userId, text);
       setNewMessage("");
     } catch (err) {
-      setError(err.message || "Failed to send message");
+      const message = String(err?.message || "Failed to send message");
+      const canRetryWithRecreate =
+        message.toLowerCase().includes("conversation not found for this user") &&
+        String(activeConversation?.otherId || "").trim();
+
+      if (!canRetryWithRecreate) {
+        setError(message);
+        return;
+      }
+
+      try {
+        const retryConversation = await createConversation(
+          [String(user.userId), String(activeConversation?.otherId || "").trim()],
+          ""
+        );
+        const recreatedId = String(retryConversation?.data?._id || "").trim();
+        if (!recreatedId) {
+          throw new Error("Conversation restore failed");
+        }
+        setActiveConversationId(recreatedId);
+        await sendConversationMessage(recreatedId, user.userId, text);
+        await loadConversations();
+        setNewMessage("");
+        setError("");
+      } catch (retryError) {
+        setError(retryError?.message || message);
+      }
     } finally {
       setSending(false);
     }

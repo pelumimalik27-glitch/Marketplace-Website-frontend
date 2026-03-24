@@ -143,12 +143,18 @@ export const fetchConversations = async () => {
 export const fetchConversationsByUser = async (userId = "") => {
   const conversations = await fetchConversations();
   if (!userId) return conversations;
-  return conversations.filter((conversation) => {
+
+  const matched = conversations.filter((conversation) => {
     const participants = Array.isArray(conversation?.participants)
       ? conversation.participants
       : [];
     return participants.some((participant) => asId(participant) === String(userId));
   });
+
+  // Backend already scopes /conversations to the authenticated user.
+  // If legacy participant IDs prevent a direct frontend ID match, return
+  // the backend payload instead of hiding valid conversations.
+  return matched.length > 0 ? matched : conversations;
 };
 
 export const fetchConversationMessages = async (conversationId = "") => {
