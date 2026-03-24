@@ -174,7 +174,7 @@ function HomePage() {
           type="button"
           onClick={handleOpenSellerFlow}
           disabled={checkingStatus || submitting}
-          className="mt-6 rounded-lg bg-orange-700 px-6 py-3 font-semibold text-white transition hover:bg-gray-200 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+          className="glow-cta mt-6 rounded-lg bg-orange-700 px-6 py-3 font-semibold text-white transition hover:bg-gray-200 hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
         >
           {checkingStatus ? "Checking..." : sellerButtonLabel}
         </button>

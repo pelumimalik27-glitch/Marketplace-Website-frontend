@@ -30,3 +30,51 @@
   animation: storefront-shimmer 1.35s linear infinite;
 }
 
+@keyframes cta-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.glow-cta {
+  position: relative;
+  isolation: isolate;
+  box-shadow:
+    0 10px 24px rgba(246, 139, 30, 0.34),
+    0 0 18px rgba(246, 139, 30, 0.38);
+  transition: box-shadow 220ms ease, transform 220ms ease;
+}
+
+.glow-cta::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(255, 201, 144, 0.72), rgba(255, 201, 144, 0));
+  filter: blur(12px);
+  animation: cta-glow-pulse 2.2s ease-in-out infinite;
+}
+
+.glow-cta:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 28px rgba(246, 139, 30, 0.44),
+    0 0 24px rgba(246, 139, 30, 0.55);
+}
+
+.glow-cta:disabled {
+  box-shadow: none;
+}
+
+.glow-cta:disabled::before {
+  animation: none;
+  opacity: 0.45;
+}
+

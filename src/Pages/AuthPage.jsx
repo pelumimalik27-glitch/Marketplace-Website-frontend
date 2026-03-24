@@ -303,12 +303,17 @@ function AuthPage() {
                 }}
                 className='text-orange-600 text-sm'
               >
-              <p className="text-gray-800 mt-2  bg-orange-400 px-4 py-3 w-50%">
-              {isAdminFlow
-                ? "Admin accounts can only sign in"
-                : isLogin
-                  ? "Don't have an account? Register"
-                  : "Already have an account? Sign in"}
+              <p className="text-gray-800 mt-2  px-4 py-3 w-50%">
+             {isAdminFlow
+               ? "Admin accounts can only sign in"
+              : isLogin
+            ? (
+            <>
+              Don't have an account?{" "}
+              <span style={{ color: "orange" }}>Register</span>
+         </>
+      )
+    : "Already have an account? Sign in"}
             </p>
               </button>
             </div>

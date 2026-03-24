@@ -15,7 +15,7 @@ function Hero() {
           <Link to="/shoppage">
             <button
               onClick={() => setActive("shop")}
-              className={`mt-6 rounded-xl px-6 py-3 text-sm sm:text-base ${
+              className={`glow-cta mt-6 rounded-xl px-6 py-3 text-sm sm:text-base ${
                 active === "shop" ? "bg-orange-700 text-white" : "bg-white text-orange-700"
               }`}
             >
