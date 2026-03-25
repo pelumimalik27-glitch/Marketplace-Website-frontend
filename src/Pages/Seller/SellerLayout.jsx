@@ -86,8 +86,16 @@ function SellerLayout() {
     { icon: LogOut, label: "Logout", action: handleSellerLogout },
   ];
 
-  const isActive = (path) =>
-    location.pathname === path || location.pathname.startsWith(`${path}/`);
+  const isActive = (path) => {
+    const currentPath = String(location.pathname || "").replace(/\/+$/, "");
+    const targetPath = String(path || "").replace(/\/+$/, "");
+
+    if (targetPath === "/seller") {
+      return currentPath === "/seller";
+    }
+
+    return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+  };
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-orange-500 via-orange-50/40 to-white">

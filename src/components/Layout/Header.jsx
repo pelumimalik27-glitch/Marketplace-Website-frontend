@@ -4,7 +4,7 @@ import MainHeader from "./MainHeader";
 import HeaderTittle from "./HeaderTittle";
 // import Cooperative from "../Home/Cooperative";
 import { AppContext } from "../../contexts/AppContext";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 function Header() {
   const { handleLogout, isLogin, user } = useContext(AppContext);
@@ -96,14 +96,28 @@ function Header() {
             </div>
             <nav className="flex flex-col gap-1 px-2 py-3">
               {links.map((item) => (
-                <Link
+                <NavLink
                   key={item.to}
                   to={item.to}
+                  end={item.to === "/"}
                   onClick={closeMenu}
-                  className="rounded-md px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  className={({ isActive }) =>
+                    `rounded-md px-3 py-2 text-sm transition ${
+                      isActive
+                        ? "border border-orange-200 bg-orange-100 font-semibold text-orange-700"
+                        : "text-slate-700 hover:bg-slate-100"
+                    }`
+                  }
                 >
-                  {item.label}
-                </Link>
+                  {({ isActive }) => (
+                    <span className="flex items-center justify-between gap-2">
+                      <span>{item.label}</span>
+                      {isActive ? (
+                        <span aria-hidden="true" className="h-2 w-2 rounded-full bg-orange-500" />
+                      ) : null}
+                    </span>
+                  )}
+                </NavLink>
               ))}
               <Link
                 to="/help"
